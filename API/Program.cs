@@ -3,7 +3,6 @@ using API.Endpoints;
 using API.Entitys;
 using API.Middleware;
 using API.Services.Interfaces;
-using API.Services.Services;
 using HostedService;
 using HostedService.Entities;
 using HostedService.Enums;
@@ -15,6 +14,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using System.Reflection;
 using System.Text;
+using API.Services.Services;
 
 
 string _cors = "all";
@@ -83,6 +83,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddHostedService<Robot>();
 
 builder.Services.AddTransient<ILogin, LoginService>();
+builder.Services.AddScoped<IScriptsService, ScriptsService>();
 
 var app = builder.Build();
 
@@ -90,76 +91,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-
-    if (!db.Users.Any())
-    {
-        db.Users.Add(new User { PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin"), RequirePassword = true });
-        db.SaveChanges();
-    }
-
-    if (!db.Origenes.Any())
-    {
-        db.Origenes.AddRange(
-            new Origen { Name = "Documentos", Path = "C:\\Users\\Usuario\\Documents", Description = "Carpeta de documentos del usuario" },
-            new Origen { Name = "Escritorio", Path = "C:\\Users\\Usuario\\Desktop", Description = "Escritorio" },
-            new Origen { Name = "Proyectos", Path = "C:\\Proyectos", Description = "Carpeta de proyectos" }
-        );
-        db.SaveChanges();
-    }
-
-    if (!db.StorageProviders.Any())
-    {
-        db.StorageProviders.AddRange(
-            new StorageProvider { Name = "Local", ConfigJsonSchema = "{}" },
-            new StorageProvider { Name = "S3", ConfigJsonSchema = "{\"bucket\":\"\",\"region\":\"\"}" }
-        );
-        db.SaveChanges();
-    }
-
-    if (!db.UserStorages.Any())
-    {
-        var user = db.Users.AsNoTracking().First();
-        db.UserStorages.AddRange(
-            new UserStorages { IdUser = user.Id, CloudDestination = "Carpeta local respaldos", CredentialJson = "{\"path\":\"D:\\\\Backups\"}" },
-            new UserStorages { IdUser = user.Id, CloudDestination = "S3 principal", CredentialJson = "{\"bucket\":\"mi-bucket\",\"region\":\"us-east-1\"}" }
-        );
-        db.SaveChanges();
-    }
-
-    if (!db.ScriptConfigurations.Any())
-    {
-        db.ScriptConfigurations.AddRange(
-            new ScriptConfiguration { Name = "Notificar inicio", ScriptPath = "C:\\Scripts\\notify_start.ps1", Arguments = "", Tipo = ScriptType.Ps1 },
-            new ScriptConfiguration { Name = "Limpiar temporales", ScriptPath = "C:\\Scripts\\clean_temp.ps1", Arguments = "", Tipo = ScriptType.Ps1 },
-            new ScriptConfiguration { Name = "Notificar fin", ScriptPath = "C:\\Scripts\\notify_end.ps1", Arguments = "", Tipo = ScriptType.Ps1 }
-        );
-        db.SaveChanges();
-    }
-
-    if (!db.BackupJobs.Any())
-    {
-        var origenDoc = db.Origenes.First(o => o.Name == "Documentos");
-        var destinoLocal = db.UserStorages.First(u => u.CloudDestination == "Carpeta local respaldos");
-        var scriptPre = db.ScriptConfigurations.First(s => s.Name == "Notificar inicio");
-        var scriptPost = db.ScriptConfigurations.First(s => s.Name == "Notificar fin");
-
-        var job = new BackupJob
-        {
-            Name = "Backup diario documentos",
-            Description = "Respaldo de la carpeta Documentos a la carpeta local de respaldos.",
-            UserStorageId = destinoLocal.Id,
-            OrigenId = origenDoc.Id,
-            CronExpression = "0 2 * * *",
-            IsActive = true
-        };
-        db.BackupJobs.Add(job);
-        db.SaveChanges();
-
-        db.relationJobsAndScripts.Add(new RelationJobsAndScript { JobId = job.Id, ScriptId = scriptPre.Id, ExecutionOrder = 1, Pre = true, Post = false });
-        db.relationJobsAndScripts.Add(new RelationJobsAndScript { JobId = job.Id, ScriptId = scriptPost.Id, ExecutionOrder = 2, Pre = false, Post = true });
-        db.SaveChanges();
-    }
+    db.EnsureSeedData();
 }
 
 app.UseCors(_cors);

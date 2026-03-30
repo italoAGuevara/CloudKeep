@@ -9,5 +9,5 @@ namespace API.DTOs
     //    [property: JsonPropertyName("arguments")] string? Arguments,
     //    [property: JsonPropertyName("tipo")] ScriptType Tipo);
 
-    public record CreateScriptRequest(string Name, string ScriptPath, string? Arguments, ScriptType Tipo);
+    public record CreateScriptRequest(string Name, string ScriptPath, string Arguments, string Tipo);
 }

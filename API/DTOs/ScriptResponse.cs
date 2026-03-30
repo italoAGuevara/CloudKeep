@@ -5,8 +5,8 @@ namespace API.DTOs
 {
     public record ScriptResponse(
         [property: JsonPropertyName("id")] int Id,
-        [property: JsonPropertyName("name")] string? Name,
-        [property: JsonPropertyName("scriptPath")] string? ScriptPath,
-        [property: JsonPropertyName("arguments")] string? Arguments,
-        [property: JsonPropertyName("tipo")] int Tipo);
+        [property: JsonPropertyName("name")] string Name,
+        [property: JsonPropertyName("scriptPath")] string ScriptPath,
+        [property: JsonPropertyName("arguments")] string Arguments,
+        [property: JsonPropertyName("tipo")] string Tipo);
 }
