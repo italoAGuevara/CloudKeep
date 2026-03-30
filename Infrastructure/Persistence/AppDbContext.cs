@@ -10,7 +10,8 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<BackupJob> BackupJobs => Set<BackupJob>();
+    public DbSet<Trabajo> Trabajos => Set<Trabajo>();
+    public DbSet<TrabajosOrigenDestino> TrabajosOrigenDestinos => Set<TrabajosOrigenDestino>();
     public DbSet<User> Users => Set<User>();
     public DbSet<FileMetadata> FileMetadatas => Set<FileMetadata>();
     public DbSet<HistoryBackupExecutions> HistoryBackupExecutions => Set<HistoryBackupExecutions>();
@@ -25,12 +26,27 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<BackupJob>(entity =>
+        modelBuilder.Entity<TrabajosOrigenDestino>(entity =>
         {
-            entity.HasOne(b => b.Origen)
+            entity.HasOne(t => t.Origen)
                 .WithMany()
-                .HasForeignKey(b => b.OrigenId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .HasForeignKey(t => t.OrigenId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.Destino)
+                .WithMany()
+                .HasForeignKey(t => t.DestinoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(t => new { t.OrigenId, t.DestinoId }).IsUnique();
+        });
+
+        modelBuilder.Entity<Trabajo>(entity =>
+        {
+            entity.HasOne(t => t.TrabajosOrigenDestino)
+                .WithMany(p => p.Trabajos)
+                .HasForeignKey(t => t.TrabajosOrigenDestinoId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Origen>(entity =>
@@ -47,8 +63,8 @@ public class AppDbContext : DbContext
         {
             entity.HasKey(rj => new { rj.ScriptId, rj.JobId });
 
-            entity.HasOne(rj => rj.BackupJob)
-                .WithMany(b => b.Scripts)
+            entity.HasOne(rj => rj.Trabajo)
+                .WithMany(t => t.Scripts)
                 .HasForeignKey(rj => rj.JobId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -113,30 +129,6 @@ public class AppDbContext : DbContext
                 new ScriptConfiguration { Nombre = "Limpiar temporales", ScriptPath = "C:\\Scripts\\clean_temp.ps1", Arguments = "asa", Tipo = ".js" },
                 new ScriptConfiguration { Nombre = "Notificar fin", ScriptPath = "C:\\Scripts\\notify_end.ps1", Arguments = "weewe", Tipo = ".ps1" }
             );
-            SaveChanges();
-        }
-
-        if (!BackupJobs.Any())
-        {
-            var origenDoc = Origenes.First(o => o.Nombre == "Documentos");
-            var destinoLocal = UserStorages.First(u => u.CloudDestination == "Carpeta local respaldos");
-            var scriptPre = ScriptConfigurations.First(s => s.Nombre == "Notificar inicio");
-            var scriptPost = ScriptConfigurations.First(s => s.Nombre == "Notificar fin");
-
-            var job = new BackupJob
-            {
-                Nombre = "Backup diario documentos",
-                Descripcion = "Respaldo de la carpeta Documentos a la carpeta local de respaldos.",
-                UserStorageId = destinoLocal.Id,
-                OrigenId = origenDoc.Id,
-                CronExpression = "0 2 * * *",
-                IsActive = true
-            };
-            BackupJobs.Add(job);
-            SaveChanges();
-
-            relationJobsAndScripts.Add(new RelationJobsAndScript { JobId = job.Id, ScriptId = scriptPre.Id, ExecutionOrder = 1, Pre = true, Post = false });
-            relationJobsAndScripts.Add(new RelationJobsAndScript { JobId = job.Id, ScriptId = scriptPost.Id, ExecutionOrder = 2, Pre = false, Post = true });
             SaveChanges();
         }
     }

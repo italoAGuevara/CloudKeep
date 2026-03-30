@@ -11,6 +11,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using System.Reflection;
 using System.Text;
+using API.Seeding;
 using API.Services.Services;
 
 
@@ -86,6 +87,7 @@ builder.Services.AddTransient<ILogin, LoginService>();
 builder.Services.AddScoped<IScriptsService, ScriptsService>();
 builder.Services.AddScoped<IOrigenService, OrigenService>();
 builder.Services.AddScoped<IDestinoService, DestinoService>();
+builder.Services.AddScoped<ITrabajoService, TrabajoService>();
 
 var app = builder.Build();
 
@@ -94,6 +96,8 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.EnsureSeedData();
+    var destinoProtector = scope.ServiceProvider.GetRequiredService<IDestinoCredentialProtector>();
+    TrabajoDemoSeed.EnsureDemoTrabajo(db, destinoProtector);
 }
 
 app.UseCors(_cors);
@@ -130,6 +134,7 @@ app.MapAuthEndpoint();
 app.MapScripts();
 app.MapOrigenes();
 app.MapDestinos();
+app.MapTrabajos();
 
 try
 {
