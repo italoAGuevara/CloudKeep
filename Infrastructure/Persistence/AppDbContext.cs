@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<FileMetadata> FileMetadatas => Set<FileMetadata>();
     public DbSet<HistoryBackupExecutions> HistoryBackupExecutions => Set<HistoryBackupExecutions>();
     public DbSet<Origen> Origenes => Set<Origen>();
+    public DbSet<Destino> Destinos => Set<Destino>();
     public DbSet<RelationJobsAndScript> relationJobsAndScripts => Set<RelationJobsAndScript>();
     public DbSet<ScriptConfiguration> ScriptConfigurations => Set<ScriptConfiguration>();
     public DbSet<StorageProvider> StorageProviders => Set<StorageProvider>();
@@ -35,6 +36,11 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Origen>(entity =>
         {
             entity.HasIndex(o => o.Nombre).IsUnique();
+        });
+
+        modelBuilder.Entity<Destino>(entity =>
+        {
+            entity.HasIndex(d => d.Nombre).IsUnique();
         });
 
         modelBuilder.Entity<RelationJobsAndScript>(entity =>

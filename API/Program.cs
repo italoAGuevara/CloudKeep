@@ -50,6 +50,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton<IDestinoCredentialProtector, DestinoCredentialProtector>();
+
 //builder.Services.ConfigureHttpJsonOptions(options =>
 //{
 //    options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default);
@@ -82,6 +85,7 @@ builder.Services.AddHostedService<Robot>();
 builder.Services.AddTransient<ILogin, LoginService>();
 builder.Services.AddScoped<IScriptsService, ScriptsService>();
 builder.Services.AddScoped<IOrigenService, OrigenService>();
+builder.Services.AddScoped<IDestinoService, DestinoService>();
 
 var app = builder.Build();
 
@@ -125,6 +129,7 @@ if (app.Environment.IsDevelopment())
 app.MapAuthEndpoint();
 app.MapScripts();
 app.MapOrigenes();
+app.MapDestinos();
 
 try
 {
