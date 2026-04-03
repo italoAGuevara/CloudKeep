@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -11,7 +11,7 @@ import { AuthService } from '../../services/auth.service';
     templateUrl: './login.component.html',
     styleUrl: './login.component.css'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
     private router = inject(Router);
     private authService = inject(AuthService);
     private cdr = inject(ChangeDetectorRef);
@@ -28,11 +28,19 @@ export class LoginComponent {
         }
     }
 
+    ngOnInit(): void {
+        const saved = this.authService.getSavedPasswordForLoginForm();
+        if (saved) {
+            this.password = saved;
+            this.rememberPassword = true;
+        }
+    }
+
     login() {
         this.loading = true;
         this.error = '';
 
-        this.authService.login(this.password).pipe(
+        this.authService.login(this.password, this.rememberPassword).pipe(
             finalize(() => {
                 this.loading = false;
                 this.cdr.detectChanges();

@@ -34,14 +34,19 @@
         </div>
       </div>
 
-      <div class="mb-4 form-check remember-password">
-        <input 
-          type="checkbox" 
-          class="form-check-input" 
-          id="rememberPassword" 
-          [(ngModel)]="rememberPassword" 
-          name="rememberPassword">
-        <label class="form-check-label text-muted" for="rememberPassword">Recordar contraseña</label>
+      <div class="mb-4 remember-password">
+        <div class="form-check">
+          <input 
+            type="checkbox" 
+            class="form-check-input" 
+            id="rememberPassword" 
+            [(ngModel)]="rememberPassword" 
+            name="rememberPassword">
+          <label class="form-check-label text-muted" for="rememberPassword">Recordar contraseña</label>
+        </div>
+        <p class="form-text text-muted small mb-0 mt-1 ms-4 ps-1">
+          Mantiene la sesión al cerrar el navegador y guarda la contraseña en este equipo. Evítalo en PCs compartidos.
+        </p>
       </div>
 
       @if (error) {

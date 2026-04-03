@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
+import { validateStrongPassword } from '../../utils/password-policy';
 
 @Component({
     selector: 'app-settings',
@@ -44,8 +45,13 @@ export class SettingsComponent {
             this.showMessage('Las contraseñas no coinciden', 'error');
             return;
         }
-        if (this.newPassword.length < 8) {
-            this.showMessage('La nueva contraseña debe tener al menos 8 caracteres', 'error');
+        const policyError = validateStrongPassword(this.newPassword);
+        if (policyError) {
+            this.showMessage(policyError, 'error');
+            return;
+        }
+        if (this.oldPassword === this.newPassword) {
+            this.showMessage('La nueva contraseña debe ser distinta de la actual.', 'error');
             return;
         }
 

@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, catchError, map, tap } from 'rxjs';
 
 const AUTH_TOKEN_KEY = 'cloudkeep_token';
+/** Solo si el usuario marcó «Recordar contraseña»; se borra al cerrar sesión. */
+const AUTH_SAVED_PASSWORD_KEY = 'cloudkeep_saved_password';
 const API_LOGIN = '/api/auth/login';
 const API_CHANGE_PASSWORD = '/api/auth/change-password';
 const API_REQUIRE_AUTH_GET = '/api/settings/require-auth';
@@ -23,7 +25,7 @@ export interface ApiResponseWrapper<T> {
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private tokenSignal = signal<string | null>(this.getStoredToken());
+  private tokenSignal = signal<string | null>(this.readTokenFromStorages());
   private requireAuthSignal = signal<boolean>(true);
 
   isLoggedIn = computed(() => !!this.tokenSignal());
@@ -32,8 +34,12 @@ export class AuthService {
   requireAuth = this.requireAuthSignal.asReadonly();
 
   constructor() {
-    const t = localStorage.getItem(AUTH_TOKEN_KEY);    
+    const t = this.readTokenFromStorages();
     if (t) this.tokenSignal.set(t);
+  }
+
+  private readTokenFromStorages(): string | null {
+    return sessionStorage.getItem(AUTH_TOKEN_KEY) ?? localStorage.getItem(AUTH_TOKEN_KEY);
   }
 
   /** Carga el valor desde el API (sin auth). Llamar al arranque de la app. */
@@ -60,19 +66,33 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return this.tokenSignal() ?? localStorage.getItem(AUTH_TOKEN_KEY);
+    return this.tokenSignal() ?? this.readTokenFromStorages();
   }
 
-  private getStoredToken(): string | null {    
-    return localStorage.getItem(AUTH_TOKEN_KEY);
+  /**
+   * Contraseña recordada para rellenar el formulario de login (solo si hubo login exitoso con «Recordar contraseña»).
+   */
+  getSavedPasswordForLoginForm(): string | null {
+    return localStorage.getItem(AUTH_SAVED_PASSWORD_KEY);
   }
 
-  /** POST /api/login con { password }. El API devuelve { message, details } con el token en details. */
-  login(password: string): Observable<string> {
+  /**
+   * POST /api/auth/login. Si remember es true, el token y la contraseña persisten en localStorage (sesión entre cierres del navegador).
+   * Si es false, el token va a sessionStorage y no se guarda la contraseña.
+   */
+  login(password: string, remember: boolean): Observable<string> {
     return this.http.post<ApiResponseWrapper<string> | string>(API_LOGIN, { password }).pipe(
       map((res) => (res as ApiResponseWrapper<string>)?.details ?? (typeof res === 'string' ? res : '')),
       tap((token) => {
-        localStorage.setItem(AUTH_TOKEN_KEY, token);
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        sessionStorage.removeItem(AUTH_TOKEN_KEY);
+        if (remember) {
+          localStorage.setItem(AUTH_TOKEN_KEY, token);
+          localStorage.setItem(AUTH_SAVED_PASSWORD_KEY, password);
+        } else {
+          sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+          localStorage.removeItem(AUTH_SAVED_PASSWORD_KEY);
+        }
         this.tokenSignal.set(token);
       })
     );
@@ -88,6 +108,8 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(AUTH_TOKEN_KEY);
+    sessionStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_SAVED_PASSWORD_KEY);
     this.tokenSignal.set(null);
   }
 }

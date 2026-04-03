@@ -23,6 +23,11 @@ namespace API.Services.Services
             if (!BCrypt.Net.BCrypt.Verify(previouPassword, user.PasswordHash))
                 throw new UnauthorizedException("La contraseña actual no es correcta.");
 
+            PasswordPolicy.ValidateNewPassword(newPassword);
+
+            if (string.Equals(previouPassword, newPassword, StringComparison.Ordinal))
+                throw new BadRequestException("La nueva contraseña debe ser distinta de la actual.");
+
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
             await _context.SaveChangesAsync();
 

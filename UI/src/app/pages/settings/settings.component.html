@@ -58,9 +58,14 @@
                 id="newPassword" 
                 [(ngModel)]="newPassword" 
                 name="newPassword"
-                placeholder="Mínimo 8 caracteres"
-                minlength="8"
+                placeholder="Mínimo 12 caracteres, mayúscula, minúscula, número y símbolo"
+                minlength="12"
+                maxlength="128"
                 required>
+              <p class="form-text text-muted small mb-0 mt-2">
+                Debe tener entre 12 y 128 caracteres, al menos una mayúscula, una minúscula, un número y un símbolo
+                (por ejemplo !, @, #, $). No puede repetir la contraseña actual.
+              </p>
             </div>
             <div class="mb-3">
               <label for="confirmPassword" class="form-label">Confirmar nueva contraseña</label>
