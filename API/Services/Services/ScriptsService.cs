@@ -47,6 +47,11 @@ namespace API.Services.Services
                 throw new BadRequestException("El campo 'Nombre' es obligatorio.");
             }
 
+            if (!File.Exists(request.ScriptPath))
+            {
+                throw new BadRequestException("No se pudo encontrar la existencia fisica del script en el sistema.");
+            }
+
             var entity = new ScriptConfiguration
             {
                 Nombre = request.Nombre,
@@ -89,7 +94,7 @@ namespace API.Services.Services
             var enUso = await _context.TrabajosScripts.AnyAsync(ts =>
                 ts.ScriptPreId == id || ts.ScriptPostId == id);
             if (enUso)
-                throw new ConflictException($"El script '{id}' está asignado como pre o post en uno o más trabajos.");
+                throw new ConflictException($"El script está asignado como pre o post en uno o más trabajos.");
 
             var antes = SnapshotScript(entity);
             _context.ScriptConfigurations.Remove(entity);

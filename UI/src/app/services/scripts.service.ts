@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, tap, throwError } from 'rxjs';
 import { unwrapApiDetails } from '../utils/api-response.util';
+import { messageFromHttpError } from '../utils/http-error.util';
 import { ToastService } from './toast.service';
 
 export type ScriptWhen = 'pre' | 'post';
@@ -52,7 +53,7 @@ export class ScriptsService {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.show(this.messageFromHttp(err), 'error');
+        this.toast.show(messageFromHttpError(err), 'error');
       },
     });
   }
@@ -67,7 +68,7 @@ export class ScriptsService {
         this.toast.show('Script creado', 'success');
       }),
       catchError((err) => {
-        this.toast.show(this.messageFromHttp(err), 'error');
+        this.toast.show(messageFromHttpError(err), 'error');
         return throwError(() => err);
       })
     );
@@ -83,7 +84,7 @@ export class ScriptsService {
         this.toast.show('Script actualizado', 'success');
       }),
       catchError((err) => {
-        this.toast.show(this.messageFromHttp(err), 'error');
+        this.toast.show(messageFromHttpError(err), 'error');
         return throwError(() => err);
       })
     );
@@ -92,15 +93,15 @@ export class ScriptsService {
   /** DELETE /api/scripts/:id */
   deleteById(id: string): Observable<void> {
     return this.http.delete(`${API_SCRIPTS}/${id}`).pipe(
-      map(() => void 0),
+      catchError((err: unknown) => {
+        this.toast.show(messageFromHttpError(err), 'error');
+        return throwError(() => err);
+      }),
       tap(() => {
         this.scripts.update((list) => list.filter((s) => s.id !== id));
         this.toast.show('Script eliminado', 'success');
       }),
-      catchError((err) => {
-        this.toast.show(this.messageFromHttp(err), 'error');
-        return throwError(() => err);
-      })
+      map(() => void 0)
     );
   }
 
@@ -126,16 +127,6 @@ export class ScriptsService {
 
   private toUpdateBody(s: CopyScript) {
     return this.toCreateBody(s);
-  }
-
-  private messageFromHttp(err: unknown): string {
-    if (err instanceof HttpErrorResponse) {
-      const body = err.error as { message?: string } | null;
-      if (body?.message) return body.message;
-      if (err.status === 0) return 'No hay conexión con el servidor. ¿Está la API en marcha?';
-      if (err.status === 409) return body?.message ?? 'Conflicto: el recurso está en uso.';
-    }
-    return 'No se pudo completar la operación.';
   }
 }
 

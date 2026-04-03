@@ -9,69 +9,117 @@
     </button>
   </div>
 
-  <div class="row g-4">
-    @for (d of destinations(); track d.id) {
-      <div class="col-md-6 col-lg-4">
-        <div class="app-card card h-100 border-0">
-          <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-              <h5 class="card-title mb-0 fw-600">{{ d.name }}</h5>
-              <span class="badge" [ngClass]="typeBadgeClass(d.type)">{{ typeLabel(d.type) }}</span>
-            </div>
-            @if (d.type === 's3') {
-              @if (d.config['bucket']) {
-                <p class="card-text small text-muted mb-1">
-                  Bucket: <code class="bg-light px-2 py-1 rounded">{{ d.config['bucket'] }}</code>
-                </p>
-              }
-              @if (d.config['region']) {
-                <p class="card-text small text-muted mb-1">
-                  Región: <code class="bg-light px-2 py-1 rounded">{{ d.config['region'] }}</code>
-                </p>
-              }
-              @if (d.config['accessKeyId']) {
-                <p class="card-text small text-muted mb-3">
-                  Credenciales: <span class="text-muted">configuradas</span>
-                </p>
-              }
-              @if (!d.config['bucket'] && !d.config['accessKeyId']) {
-                <p class="card-text small text-muted mb-3">Sin configuración</p>
-              }
-            } @else {
-              @if (d.config['serviceAccountEmail']) {
-                <p class="card-text small text-muted mb-1">
-                  Service Account: <code class="bg-light px-2 py-1 rounded small">{{ d.config['serviceAccountEmail'] }}</code>
-                </p>
-              }
-              @if (d.config['folderId']) {
-                <p class="card-text small text-muted mb-3">
-                  Folder ID: <code class="bg-light px-2 py-1 rounded">{{ d.config['folderId'] }}</code>
-                </p>
-              }
-              @if (!d.config['folderId'] && !d.config['serviceAccountEmail']) {
-                <p class="card-text small text-muted mb-3">Sin configuración</p>
-              }
-            }
-            <div class="d-flex gap-2">
-              <button type="button" class="btn btn-sm btn-outline-primary btn-modern btn-icon btn-action btn-action-edit" (click)="openEdit(d)" aria-label="Editar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5v.5a.5.5 0 0 1 .5.5v.5h.5V10h.207l6.5-6.5zm-3.5 2.5L2 12.293V13h.707l6.5-6.5H9.5v-.5H9v-.5H8.5V5H8v-.5H7.5V4h-.293L2 9.293v.586l3-3z"/></svg>
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-danger btn-modern btn-icon btn-action btn-action-delete" (click)="deleteDest(d)" aria-label="Eliminar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
-              </button>
-            </div>
-          </div>
+  <div class="app-card card border-0">
+    <div class="card-body p-0">
+      @if (destSvc.loading()) {
+        <div class="p-4 text-center text-muted">
+          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          Cargando destinos…
         </div>
-      </div>
-    } @empty {
-      <div class="col-12">
-        <div class="app-card card border-0">
-          <div class="card-body p-4 text-center text-muted">
-            No hay destinos configurados. Añade uno (Amazon S3 o Google Drive) con "Nuevo destino".
-          </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Nombre</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Bucket (AWS S3)</th>
+                <th scope="col">Región (AWS S3)</th>
+                <th scope="col">Access Key ID (AWS S3)</th>
+                <th scope="col">Secret Access Key (AWS S3)</th>
+                <th scope="col">Cuenta servicio (Google)</th>
+                <th scope="col">Private key (Google)</th>
+                <th scope="col">IDCarpeta</th>
+                <th scope="col" class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of destSvc.destinations(); track d.id) {
+                <tr>
+                  <td class="fw-500">{{ d.name }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="typeBadgeClass(d.type)">{{ typeLabel(d.type) }}</span>
+                  </td>
+                  <td>
+                    @if (d.type === 's3' && d.bucketName) {
+                      <code class="small bg-light px-2 py-1 rounded">{{ d.bucketName }}</code>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (d.type === 's3' && d.region) {
+                      <code class="small bg-light px-2 py-1 rounded">{{ d.region }}</code>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (d.type === 's3' && d.accessKeyId) {
+                      <code class="small bg-light px-2 py-1 rounded">{{ d.accessKeyId }}</code>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (d.type === 's3' && d.secretAccessKeyConfigurada) {
+                      <span class="text-muted small">Almacenada (cifrada)</span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (d.type === 'google_drive' && d.serviceAccountEmail) {
+                      <code class="small bg-light px-2 py-1 rounded">{{ d.serviceAccountEmail }}</code>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (d.type === 'google_drive' && d.privateKeyConfigurada) {
+                      <span class="text-muted small">Almacenada (cifrada)</span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (d.type === 'google_drive') {
+                      <code class="small bg-light px-2 py-1 rounded">{{ d.idCarpeta || '—' }}</code>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td class="text-end text-nowrap">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary btn-modern btn-icon btn-action btn-action-edit me-1"
+                      (click)="openEdit(d)"
+                      aria-label="Editar"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5v.5a.5.5 0 0 1 .5.5v.5h.5V10h.207l6.5-6.5zm-3.5 2.5L2 12.293V13h.707l6.5-6.5H9.5v-.5H9v-.5H8.5V5H8v-.5H7.5V4h-.293L2 9.293v.586l3-3z"/></svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger btn-modern btn-icon btn-action btn-action-delete"
+                      (click)="deleteDest(d)"
+                      aria-label="Eliminar"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="10" class="text-center text-muted py-4">
+                    No hay destinos configurados. Añade uno (Amazon S3 o Google Drive) con «Nuevo destino».
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
-      </div>
-    }
+      }
+    </div>
   </div>
 </div>
 
@@ -85,6 +133,11 @@
           <button type="button" class="btn-close" (click)="closeModal()" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">
+          @if (editingDest()) {
+            <p class="small text-muted mb-3">
+              Las credenciales no se muestran por seguridad. Déjalas vacías para conservarlas; si cambias tipo o datos sensibles, completa todos los campos del bloque correspondiente.
+            </p>
+          }
           <div class="mb-3">
             <label class="form-label fw-500">Nombre del destino</label>
             <input type="text" class="form-control" [(ngModel)]="formName" placeholder="Ej: S3 principal" />
@@ -168,7 +221,7 @@
               <p class="small text-muted mb-0 mt-1">Pega el contenido completo del campo <code>private_key</code> del JSON de la cuenta de servicio.</p>
             </div>
             <div class="mb-3">
-              <label class="form-label fw-500">ID de carpeta (Google Drive)</label>
+              <label class="form-label fw-500">IDCarpeta (ID de carpeta en Google Drive)</label>
               <input type="text" class="form-control" [(ngModel)]="formFolderId" placeholder="ID de la carpeta de destino" />
               <p class="small text-muted mb-0 mt-1">Carpeta donde se subirán los archivos. Comparte la carpeta en Drive con el correo de la Service Account (como editor).</p>
             </div>
@@ -203,13 +256,16 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-modal-cancel" (click)="closeModal()">
+          <button type="button" class="btn btn-modal-cancel" (click)="closeModal()" [disabled]="saving()">
             <span class="btn-modal-icon" aria-hidden="true">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </span>
             Cancelar
           </button>
-          <button type="button" class="btn btn-modal-save" (click)="save()">
+          <button type="button" class="btn btn-modal-save" (click)="save()" [disabled]="saving()">
+            @if (saving()) {
+              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            }
             <span class="btn-modal-icon" aria-hidden="true">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             </span>
