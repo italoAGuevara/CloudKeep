@@ -14,6 +14,7 @@ public static class TrabajoEndpoint
         group.MapPost("/", CreateTrabajo).WithName("CreateTrabajo");
         group.MapPut("/{id:int}", UpdateTrabajo).WithName("UpdateTrabajo");
         group.MapDelete("/{id:int}", DeleteTrabajo).WithName("DeleteTrabajo");
+        group.MapPost("/{id:int}/ejecutar", EjecutarTrabajoManual).WithName("EjecutarTrabajoManual");
     }
 
     private static async Task<IResult> GetTrabajos(ITrabajoService trabajoService)
@@ -44,5 +45,14 @@ public static class TrabajoEndpoint
     {
         var deleted = await trabajoService.Delete(id);
         return deleted ? Results.NoContent() : Results.NotFound();
+    }
+
+    private static async Task<IResult> EjecutarTrabajoManual(
+        int id,
+        ITrabajoEjecucionService ejecucionService,
+        CancellationToken cancellationToken)
+    {
+        var result = await ejecucionService.EjecutarManualAsync(id, cancellationToken);
+        return Results.Ok(result);
     }
 }

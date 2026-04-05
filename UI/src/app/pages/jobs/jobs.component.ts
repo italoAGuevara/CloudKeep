@@ -58,13 +58,17 @@ export class JobsComponent implements OnInit {
   }
 
   runJob(job: Job): void {
+    if (job.procesando) return;
     this.runningJobId.set(job.id);
-    this.toastService.show(`Iniciando trabajo: ${job.name}`, 'info');
-
-    setTimeout(() => {
-      this.runningJobId.set(null);
-      this.toastService.show(`Trabajo finalizado: ${job.name}`, 'success');
-    }, 1500);
+    this.toastService.show(`Ejecutando «${job.name}»…`, 'info');
+    this.jobsService.runManual(job.id).subscribe({
+      next: () => {
+        this.runningJobId.set(null);
+      },
+      error: () => {
+        this.runningJobId.set(null);
+      },
+    });
   }
 
   setPage(page: number): void {
@@ -97,7 +101,7 @@ export class JobsComponent implements OnInit {
   runningJobId = signal<number | null>(null);
 
   isRunning(job: Job): boolean {
-    return this.runningJobId() === job.id;
+    return this.runningJobId() === job.id || job.procesando;
   }
 
   scheduleLabel(schedule: string): string {

@@ -92,6 +92,7 @@ builder.Services.AddScoped<IScriptsService, ScriptsService>();
 builder.Services.AddScoped<IOrigenService, OrigenService>();
 builder.Services.AddScoped<IDestinoService, DestinoService>();
 builder.Services.AddScoped<ITrabajoService, TrabajoService>();
+builder.Services.AddScoped<ITrabajoEjecucionService, TrabajoEjecucionService>();
 
 var app = builder.Build();
 

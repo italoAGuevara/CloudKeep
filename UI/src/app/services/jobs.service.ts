@@ -34,6 +34,12 @@ export interface CreateTrabajoPayload {
   activo?: boolean;
 }
 
+export interface EjecutarTrabajoResult {
+  historialId: number;
+  archivosCopiados: number;
+  mensaje: string;
+}
+
 export type UpdateTrabajoPayload = Partial<{
   nombre: string;
   descripcion: string;
@@ -69,6 +75,12 @@ interface TrabajoApiDto {
   estatusPrevio: string;
   fechaCreacion: string;
   fechaModificacion: string;
+}
+
+interface EjecutarTrabajoApiDto {
+  historialId: number;
+  archivosCopiados: number;
+  mensaje: string;
 }
 
 const API_TRABAJOS = '/api/trabajos';
@@ -161,6 +173,27 @@ export class JobsService {
       }),
       catchError((err) => {
         this.toast.show(messageFromHttpError(err), 'error');
+        return throwError(() => err);
+      })
+    );
+  }
+
+  /** Ejecuta la copia manual (origen → S3 o Google Drive según el destino del trabajo). */
+  runManual(id: number): Observable<EjecutarTrabajoResult> {
+    return this.http.post<unknown>(`${API_TRABAJOS}/${id}/ejecutar`, {}).pipe(
+      map((res) => unwrapApiDetails<EjecutarTrabajoApiDto>(res)),
+      map((d) => ({
+        historialId: d.historialId,
+        archivosCopiados: d.archivosCopiados,
+        mensaje: d.mensaje,
+      })),
+      tap((r) => {
+        this.toast.show(r.mensaje, 'success');
+        this.loadAll();
+      }),
+      catchError((err) => {
+        this.toast.show(messageFromHttpError(err), 'error');
+        this.loadAll();
         return throwError(() => err);
       })
     );
