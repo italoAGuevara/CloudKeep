@@ -102,7 +102,10 @@ builder.Services.AddScoped<ITrabajoService, TrabajoService>();
 builder.Services.AddScoped<ITrabajoEjecucionService, TrabajoEjecucionService>();
 builder.Services.AddScoped<IDestinoToCloudCopier, DestinoToCloudCopier>();
 builder.Services.Configure<ScriptRunnerOptions>(builder.Configuration.GetSection(ScriptRunnerOptions.SectionName));
-builder.Services.AddSingleton<IScriptRunner, ScriptRunner>();
+builder.Services.AddScoped<ApplicationSettingsService>();
+builder.Services.AddScoped<IApplicationSettingsService>(sp => sp.GetRequiredService<ApplicationSettingsService>());
+builder.Services.AddScoped<IScriptExecutionTimeoutProvider>(sp => sp.GetRequiredService<ApplicationSettingsService>());
+builder.Services.AddScoped<IScriptRunner, ScriptRunner>();
 
 var app = builder.Build();
 
@@ -146,6 +149,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapAuthEndpoint();
+app.MapSettingsEndpoint();
 app.MapScripts();
 app.MapOrigenes();
 app.MapDestinos();

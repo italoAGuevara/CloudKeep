@@ -11,7 +11,7 @@ public sealed class ScriptRunnerOptions
     public string? NodeExecutablePath { get; set; }
 
     /// <summary>
-    /// Tiempo máximo de espera a que el proceso del script termine. Si es &lt;= 0, se usan 2 minutos.
+    /// Respaldo si no hay valor en BD (p. ej. antes de migrar). Si es &lt;= 0, se usan 2 minutos.
     /// </summary>
     public int ScriptExecutionTimeoutMinutes { get; set; }
 }

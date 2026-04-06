@@ -22,6 +22,7 @@ public class AppDbContext : DbContext
     public DbSet<StorageProvider> StorageProviders => Set<StorageProvider>();
     public DbSet<UserStorages> UserStorages => Set<UserStorages>();
     public DbSet<LogAccionesUsuario> LogAccionesUsuario => Set<LogAccionesUsuario>();
+    public DbSet<ApplicationSettings> ApplicationSettings => Set<ApplicationSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -98,6 +99,16 @@ public class AppDbContext : DbContext
         if (!Users.Any())
         {
             Users.Add(new User { PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin"), RequirePassword = true });
+            SaveChanges();
+        }
+
+        if (!ApplicationSettings.Any())
+        {
+            ApplicationSettings.Add(new ApplicationSettings
+            {
+                Id = 1,
+                ScriptExecutionTimeoutMinutes = 2
+            });
             SaveChanges();
         }
 

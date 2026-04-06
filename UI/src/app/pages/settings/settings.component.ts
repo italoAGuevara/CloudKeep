@@ -1,19 +1,22 @@
-import { ChangeDetectorRef, Component, inject, NgZone } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { SettingsService } from '../../services/settings.service';
 import { ToastService } from '../../services/toast.service';
+import { messageFromHttpError } from '../../utils/http-error.util';
 import { validateStrongPassword } from '../../utils/password-policy';
 
 @Component({
-    selector: 'app-settings',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    templateUrl: './settings.component.html',
-    styleUrl: './settings.component.css'
+  selector: 'app-settings',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './settings.component.html',
+  styleUrl: './settings.component.css'
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
     private authService = inject(AuthService);
+    private settingsService = inject(SettingsService);
     private toastService = inject(ToastService);
     private cdr = inject(ChangeDetectorRef);
     private ngZone = inject(NgZone);
@@ -27,6 +30,42 @@ export class SettingsComponent {
     message = '';
     messageType: 'success' | 'error' = 'success';
     changingPassword = false;
+
+    /** Tiempo máximo de ejecución de scripts PRE/POST (minutos). */
+    scriptExecutionTimeoutMinutes = 2;
+    loadingScriptTimeout = true;
+    savingScriptTimeout = false;
+
+    ngOnInit(): void {
+        this.settingsService.getScriptExecutionTimeout().subscribe({
+            next: (m) => {
+                this.scriptExecutionTimeoutMinutes = m;
+                this.loadingScriptTimeout = false;
+                this.cdr.markForCheck();
+            },
+            error: () => {
+                this.loadingScriptTimeout = false;
+                this.cdr.markForCheck();
+            },
+        });
+    }
+
+    saveScriptTimeout(): void {
+        this.savingScriptTimeout = true;
+        this.settingsService.setScriptExecutionTimeout(this.scriptExecutionTimeoutMinutes).subscribe({
+            next: () => {
+                this.savingScriptTimeout = false;
+                this.toastService.show('Tiempo de espera de scripts guardado.', 'success');
+                this.cdr.markForCheck();
+            },
+            error: (err) => {
+                this.savingScriptTimeout = false;
+                const msg = messageFromHttpError(err) ?? 'No se pudo guardar.';
+                this.toastService.show(msg, 'error');
+                this.cdr.markForCheck();
+            },
+        });
+    }
 
     saveAuthSettings() {
         this.authService.setRequireAuth(this.requireAuth).subscribe({

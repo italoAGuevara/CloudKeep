@@ -10,10 +10,12 @@ namespace HostedService.Scripts;
 public sealed class ScriptRunner : IScriptRunner
 {
     private readonly ScriptRunnerOptions _options;
+    private readonly IScriptExecutionTimeoutProvider _timeoutProvider;
 
-    public ScriptRunner(IOptions<ScriptRunnerOptions> options)
+    public ScriptRunner(IOptions<ScriptRunnerOptions> options, IScriptExecutionTimeoutProvider timeoutProvider)
     {
         _options = options.Value;
+        _timeoutProvider = timeoutProvider;
     }
 
     public async Task<ScriptExecutionResult> RunAsync(ScriptConfiguration script, CancellationToken cancellationToken = default)
@@ -61,9 +63,10 @@ public sealed class ScriptRunner : IScriptRunner
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        var timeoutMinutes = _options.ScriptExecutionTimeoutMinutes > 0
-            ? _options.ScriptExecutionTimeoutMinutes
-            : 2;
+        var fromDb = await _timeoutProvider.GetScriptExecutionTimeoutMinutesAsync(cancellationToken).ConfigureAwait(false);
+        var timeoutMinutes = fromDb > 0
+            ? fromDb
+            : (_options.ScriptExecutionTimeoutMinutes > 0 ? _options.ScriptExecutionTimeoutMinutes : 2);
 
         using var timeoutCts = new CancellationTokenSource();
         timeoutCts.CancelAfter(TimeSpan.FromMinutes(timeoutMinutes));

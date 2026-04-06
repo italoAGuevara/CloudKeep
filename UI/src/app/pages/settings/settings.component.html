@@ -15,25 +15,43 @@
 
     <div class="card mb-4 border-0 shadow-sm">
       <div class="card-body p-4">
-        <!--
-        <h5 class="card-title fw-bold mb-3">Autenticación</h5>
-        <div class="form-check form-switch mb-3">
-          <input 
-            class="form-check-input" 
-            type="checkbox" 
-            role="switch" 
-            id="authSwitch" 
-            [(ngModel)]="requireAuth"
-            (change)="saveAuthSettings()">
-          <label class="form-check-label" for="authSwitch">
-            Requerir contraseña al iniciar sesión
-          </label>
-        </div>
-        <p class="text-muted small">
-          Si se desactiva, cualquier persona con acceso a la aplicación podrá administrar los trabajos y destinos.
+        <h5 class="card-title fw-bold mb-3">Scripts (PRE / POST)</h5>
+        <p class="text-muted small mb-3">
+          Si un script tarda más de este tiempo en terminar, se cancela y se considera error de timeout (entre 1 y 1440 minutos).
         </p>
+        @if (loadingScriptTimeout) {
+          <p class="text-muted small mb-0">Cargando…</p>
+        } @else {
+          <div class="row align-items-end g-3">
+            <div class="col-auto">
+              <label for="scriptTimeout" class="form-label">Tiempo máximo (minutos)</label>
+              <input
+                id="scriptTimeout"
+                type="number"
+                class="form-control"
+                style="max-width: 8rem"
+                [(ngModel)]="scriptExecutionTimeoutMinutes"
+                name="scriptTimeout"
+                min="1"
+                max="1440"
+                step="1">
+            </div>
+            <div class="col-auto">
+              <button
+                type="button"
+                class="btn btn-modal-save"
+                [disabled]="savingScriptTimeout"
+                (click)="saveScriptTimeout()">
+                @if (savingScriptTimeout) {
+                  <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                }
+                {{ savingScriptTimeout ? 'Guardando…' : 'Guardar' }}
+              </button>
+            </div>
+          </div>
+        }
       </div>
-    </div>-->
+    </div>
 
     @if (requireAuth) {
       <div class="card border-0 shadow-sm">
