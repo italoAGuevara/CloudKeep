@@ -22,8 +22,6 @@ using HostedService.Scheduling;
 
 string _cors = "all";
 
-var angularPath = Path.Combine(Directory.GetCurrentDirectory(), "C:\\Users\\italo\\Documents\\proyecto-grado\\ProyectoDeGrado\\Interfaz\\dist\\Interfaz\\browser");
-
 var builder = WebApplication.CreateSlimBuilder(args);
 
 Log.Logger = new LoggerConfiguration()
@@ -111,6 +109,15 @@ builder.Services.AddScoped<IScriptRunner, ScriptRunner>();
 
 var app = builder.Build();
 
+var angularBrowserConfigured = app.Configuration["Spa:BrowserPath"]?.Trim();
+if (string.IsNullOrEmpty(angularBrowserConfigured))
+    throw new InvalidOperationException("Configure 'Spa:BrowserPath' in appsettings.json (absolute path or relative to the API content root).");
+
+var angularPath = Path.GetFullPath(
+    Path.IsPathRooted(angularBrowserConfigured)
+        ? angularBrowserConfigured
+        : Path.Combine(app.Environment.ContentRootPath, angularBrowserConfigured));
+
 // Asegurar usuario único y datos de ejemplo (orígenes, scripts, jobs)
 using (var scope = app.Services.CreateScope())
 {
@@ -135,11 +142,7 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = ""
 });
 
-// RETURN index.html for any non-API route to allow Angular routing to work
-app.MapFallbackToFile("index.html", new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(angularPath)
-});
+
 
 app.UseMiddleware<ResponseWrapperMiddleware>();
 app.UseMiddleware<ExceptionMiddleware>();
@@ -158,6 +161,12 @@ app.MapOrigenes();
 app.MapDestinos();
 app.MapTrabajos();
 app.MapLogAccionesUsuario();
+
+// RETURN index.html for any non-API route to allow Angular routing to work
+app.MapFallbackToFile("index.html", new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(angularPath)
+});
 
 try
 {
