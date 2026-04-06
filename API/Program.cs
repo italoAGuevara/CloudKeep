@@ -2,6 +2,7 @@ using API.Endpoints;
 using API.Middleware;
 using API.Services.Interfaces;
 using HostedService;
+using HostedService.Backup;
 using Infrastructure.DependencyInjection;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -93,6 +94,7 @@ builder.Services.AddScoped<IOrigenService, OrigenService>();
 builder.Services.AddScoped<IDestinoService, DestinoService>();
 builder.Services.AddScoped<ITrabajoService, TrabajoService>();
 builder.Services.AddScoped<ITrabajoEjecucionService, TrabajoEjecucionService>();
+builder.Services.AddScoped<IDestinoToCloudCopier, DestinoToCloudCopier>();
 
 var app = builder.Build();
 

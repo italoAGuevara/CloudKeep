@@ -13,6 +13,7 @@ using API.Audit;
 using API.DTOs;
 using API.Exceptions;
 using API.Services.Interfaces;
+using HostedService;
 using HostedService.Entities;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;

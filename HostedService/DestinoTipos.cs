@@ -1,4 +1,4 @@
-namespace API;
+namespace HostedService;
 
 public static class DestinoTipos
 {
