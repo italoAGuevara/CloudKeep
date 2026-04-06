@@ -7,10 +7,7 @@ import { JobWizardComponent } from './pages/jobs/job-wizard/job-wizard.component
 import { DestinationsComponent } from './pages/destinations/destinations.component';
 import { ScriptsComponent } from './pages/scripts/scripts.component';
 import { SettingsComponent } from './pages/settings/settings.component';
-import { ReportsComponent } from './pages/reports/reports.component';
 import { JobReportComponent } from './pages/reports/job-report/job-report.component';
-import { DestinationExecutionsComponent } from './pages/reports/destination-executions/destination-executions.component';
-import { LogsReportComponent } from './pages/reports/logs-report/logs-report.component';
 import { AboutComponent } from './pages/about/about.component';
 import { AboutGeneralComponent } from './pages/about/about-general/about-general.component';
 import { AboutLibrariesComponent } from './pages/about/about-libraries/about-libraries.component';
@@ -33,10 +30,10 @@ export const routes: Routes = [
       { path: 'trabajos/:id/editar', component: JobWizardComponent },
       { path: 'destinos', component: DestinationsComponent },
       { path: 'scripts', component: ScriptsComponent },
-      { path: 'reportes/trabajos', component: JobReportComponent },
-      { path: 'reportes/destinos', component: DestinationExecutionsComponent },
-      { path: 'reportes/logs', component: LogsReportComponent },
-      { path: 'reportes', component: ReportsComponent },
+      { path: 'reportes/trabajos', redirectTo: 'reportes', pathMatch: 'full' },
+      { path: 'reportes/destinos', redirectTo: 'reportes', pathMatch: 'full' },
+      { path: 'reportes/logs', redirectTo: 'reportes', pathMatch: 'full' },
+      { path: 'reportes', component: JobReportComponent },
       { path: 'configuracion', component: SettingsComponent },
       {
         path: 'acerca-de',

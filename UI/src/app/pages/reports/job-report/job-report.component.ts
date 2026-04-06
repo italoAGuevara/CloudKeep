@@ -24,10 +24,7 @@ export class JobReportComponent implements OnInit {
   private scriptsService = inject(ScriptsService);
   private destinationsService = inject(DestinationsService);
 
-  breadcrumbItems: BreadcrumbItem[] = [
-    { label: 'Reportes', link: '/reportes' },
-    { label: 'Reporte de trabajos' },
-  ];
+  breadcrumbItems: BreadcrumbItem[] = [{ label: 'Reporte de trabajos' }];
   jobs = this.jobsService.jobs;
 
   historial = signal<EjecucionHistorialItem[]>([]);
