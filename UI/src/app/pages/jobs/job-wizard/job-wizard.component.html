@@ -163,12 +163,16 @@
               </select>
             </div>
             <div class="col-6">
-              <label class="form-label small text-muted mb-1">Minuto</label>
-              <select class="form-select" [(ngModel)]="formScheduleMinute">
-                @for (m of minutes; track m) {
-                  <option [ngValue]="m">{{ pad2(m) }}</option>
-                }
-              </select>
+              <label class="form-label small text-muted mb-1">Minuto (0–59)</label>
+              <input
+                type="number"
+                class="form-control"
+                min="0"
+                max="59"
+                step="1"
+                [ngModel]="formScheduleMinute"
+                (ngModelChange)="onScheduleMinuteInput($event)"
+              />
             </div>
           </div>
         </div>

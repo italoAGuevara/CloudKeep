@@ -19,12 +19,6 @@ const WEEKDAY_LABELS = [
   { value: 6, label: 'S' },
 ];
 
-const MINUTE_OPTIONS = [0, 15, 30, 45];
-
-function nearestMinute(m: number): number {
-  return MINUTE_OPTIONS.reduce((best, x) => (Math.abs(x - m) < Math.abs(best - m) ? x : best), 0);
-}
-
 /** Interpreta cron de 5 campos estándar para rellenar el formulario (casos simples). */
 function applyCronToForm(
   cron: string,
@@ -42,7 +36,7 @@ function applyCronToForm(
   const m = parseInt(minS, 10);
   const h = parseInt(hourS, 10);
   if (!Number.isNaN(h) && h >= 0 && h <= 23) target.formScheduleHour = h;
-  if (!Number.isNaN(m) && m >= 0 && m <= 59) target.formScheduleMinute = nearestMinute(m);
+  if (!Number.isNaN(m) && m >= 0 && m <= 59) target.formScheduleMinute = m;
 
   if (dow !== '*' && dow !== '?') {
     target.formScheduleType = 'weekly';
@@ -88,7 +82,6 @@ export class JobWizardComponent implements OnInit {
 
   readonly weekdayOptions = WEEKDAY_LABELS;
   readonly hours = Array.from({ length: 24 }, (_, i) => i);
-  readonly minutes = MINUTE_OPTIONS;
   readonly daysOfMonth = Array.from({ length: 31 }, (_, i) => i + 1);
 
   destinations = this.destinationsService.destinations;
@@ -340,6 +333,20 @@ export class JobWizardComponent implements OnInit {
 
   pad2(n: number): string {
     return String(n).padStart(2, '0');
+  }
+
+  /** Ajusta el minuto al rango 0–59 al escribir en el campo numérico. */
+  onScheduleMinuteInput(value: unknown): void {
+    if (value === '' || value === null || value === undefined) {
+      this.formScheduleMinute = 0;
+      return;
+    }
+    const n = typeof value === 'number' ? value : parseInt(String(value), 10);
+    if (Number.isNaN(n)) {
+      this.formScheduleMinute = 0;
+      return;
+    }
+    this.formScheduleMinute = Math.min(59, Math.max(0, Math.trunc(n)));
   }
 
   cancel(): void {
