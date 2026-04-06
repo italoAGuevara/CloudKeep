@@ -14,13 +14,13 @@ public class AppDbContext : DbContext
     public DbSet<TrabajosOrigenDestino> TrabajosOrigenDestinos => Set<TrabajosOrigenDestino>();
     public DbSet<TrabajoScripts> TrabajosScripts => Set<TrabajoScripts>();
     public DbSet<User> Users => Set<User>();
-    public DbSet<FileMetadata> FileMetadatas => Set<FileMetadata>();
+    //public DbSet<FileMetadata> FileMetadatas => Set<FileMetadata>();
     public DbSet<HistoryBackupExecutions> HistoryBackupExecutions => Set<HistoryBackupExecutions>();
     public DbSet<Origen> Origenes => Set<Origen>();
     public DbSet<Destino> Destinos => Set<Destino>();
     public DbSet<ScriptConfiguration> ScriptConfigurations => Set<ScriptConfiguration>();
-    public DbSet<StorageProvider> StorageProviders => Set<StorageProvider>();
-    public DbSet<UserStorages> UserStorages => Set<UserStorages>();
+    //public DbSet<StorageProvider> StorageProviders => Set<StorageProvider>();
+    //public DbSet<UserStorages> UserStorages => Set<UserStorages>();
     public DbSet<LogAccionesUsuario> LogAccionesUsuario => Set<LogAccionesUsuario>();
     public DbSet<ApplicationSettings> ApplicationSettings => Set<ApplicationSettings>();
 
@@ -121,25 +121,7 @@ public class AppDbContext : DbContext
             );
             SaveChanges();
         }
-
-        if (!StorageProviders.Any())
-        {
-            StorageProviders.AddRange(
-                new StorageProvider { Nombre = "Local", ConfigJsonSchema = "{}" },
-                new StorageProvider { Nombre = "S3", ConfigJsonSchema = "{\"bucket\":\"\",\"region\":\"\"}" }
-            );
-            SaveChanges();
-        }
-
-        if (!UserStorages.Any())
-        {
-            var user = Users.AsNoTracking().First();
-            UserStorages.AddRange(
-                new UserStorages { IdUser = user.Id, CloudDestination = "Carpeta local respaldos", CredentialJson = "{\"ruta\":\"D:\\\\Backups\"}" },
-                new UserStorages { IdUser = user.Id, CloudDestination = "S3 principal", CredentialJson = "{\"bucket\":\"mi-bucket\",\"region\":\"us-east-1\"}" }
-            );
-            SaveChanges();
-        }
+               
 
         if (!ScriptConfigurations.Any())
         {
