@@ -1,12 +1,21 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using HostedService.Entities;
+using Microsoft.Extensions.Options;
 
 namespace HostedService.Scripts;
 
 public sealed class ScriptRunner : IScriptRunner
 {
+    private readonly ScriptRunnerOptions _options;
+
+    public ScriptRunner(IOptions<ScriptRunnerOptions> options)
+    {
+        _options = options.Value;
+    }
+
     public async Task<ScriptExecutionResult> RunAsync(ScriptConfiguration script, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(script);
@@ -23,7 +32,7 @@ public sealed class ScriptRunner : IScriptRunner
             scriptDir = Environment.CurrentDirectory;
 
         var scriptFileName = Path.GetFileName(fullPath);
-        var psi = CreateStartInfo(tipo, scriptDir, scriptFileName, arguments);
+        var psi = CreateStartInfo(tipo, scriptDir, scriptFileName, arguments, ResolveNodeExecutable());
 
         using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
         var stdout = new StringBuilder();
@@ -46,7 +55,7 @@ public sealed class ScriptRunner : IScriptRunner
         catch (Exception ex) when (ex is FileNotFoundException or Win32Exception)
         {
             throw new InvalidOperationException(
-                $"No se pudo iniciar el intérprete para «{tipo}». Para .js debe existir «node» en el PATH.", ex);
+                DescribirFalloAlIniciarProceso(tipo), ex);
         }
 
         process.BeginOutputReadLine();
@@ -67,7 +76,54 @@ public sealed class ScriptRunner : IScriptRunner
         return Path.GetExtension(fullPath).ToLowerInvariant();
     }
 
-    private static ProcessStartInfo CreateStartInfo(string tipo, string workingDirectory, string scriptFileName, string arguments)
+    private string ResolveNodeExecutable()
+    {
+        var baseDir = AppContext.BaseDirectory;
+
+        if (!string.IsNullOrWhiteSpace(_options.NodeExecutablePath))
+        {
+            var raw = _options.NodeExecutablePath.Trim();
+            var candidate = Path.IsPathRooted(raw)
+                ? raw
+                : Path.GetFullPath(Path.Combine(baseDir, raw));
+            if (File.Exists(candidate))
+                return candidate;
+        }
+
+        var bundled = Path.Combine(
+            baseDir,
+            "runtime",
+            "node",
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "node.exe" : "node");
+        if (File.Exists(bundled))
+            return bundled;
+
+        return "node";
+    }
+
+    private string DescribirFalloAlIniciarProceso(string tipo)
+    {
+        if (!string.Equals(tipo, ".js", StringComparison.OrdinalIgnoreCase))
+            return $"No se pudo iniciar el intérprete para «{tipo}».";
+
+        var baseDir = AppContext.BaseDirectory;
+        var bundled = Path.Combine(
+            baseDir,
+            "runtime",
+            "node",
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "node.exe" : "node");
+        var probado = ResolveNodeExecutable();
+        return
+            "No se pudo iniciar Node.js. Coloca el binario en «runtime/node/» junto a la API, define ScriptRunner:NodeExecutablePath en appsettings, o instala Node en el PATH. "
+            + $"Se probó: «{probado}» (carpeta embebida esperada: «{bundled}»).";
+    }
+
+    private static ProcessStartInfo CreateStartInfo(
+        string tipo,
+        string workingDirectory,
+        string scriptFileName,
+        string arguments,
+        string nodeExecutable)
     {
         var psi = new ProcessStartInfo
         {
@@ -98,7 +154,7 @@ public sealed class ScriptRunner : IScriptRunner
                 return psi;
 
             case ".js":
-                psi.FileName = "node";
+                psi.FileName = nodeExecutable;
                 psi.Arguments = string.IsNullOrEmpty(arguments)
                     ? quotedName
                     : $"{quotedName} {arguments}";

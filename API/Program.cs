@@ -101,6 +101,7 @@ builder.Services.AddScoped<IDestinoService, DestinoService>();
 builder.Services.AddScoped<ITrabajoService, TrabajoService>();
 builder.Services.AddScoped<ITrabajoEjecucionService, TrabajoEjecucionService>();
 builder.Services.AddScoped<IDestinoToCloudCopier, DestinoToCloudCopier>();
+builder.Services.Configure<ScriptRunnerOptions>(builder.Configuration.GetSection(ScriptRunnerOptions.SectionName));
 builder.Services.AddSingleton<IScriptRunner, ScriptRunner>();
 
 var app = builder.Build();
