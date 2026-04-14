@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="API/API.csproj" />
+  <Project Path="API/CloudKeep.csproj" />
   <Project Path="HostedService/HostedService.csproj" Id="bc5a8d43-74a0-49f0-adc9-7ef46d27225a" />
   <Project Path="Infrastructure/Infrastructure.csproj" Id="216b6a20-b147-4ef3-8e42-ffc82b17254c" />
 </Solution>
