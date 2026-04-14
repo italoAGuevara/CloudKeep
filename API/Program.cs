@@ -24,12 +24,25 @@ string _cors = "all";
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
+// En PRD (IIS, servicio Windows, etc.) el cwd suele no ser el content root; los logs relativos fallan o van a otra carpeta.
+var logsDirectory = Path.Combine(builder.Environment.ContentRootPath, "Logs");
+try
+{
+    Directory.CreateDirectory(logsDirectory);
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"No se pudo crear el directorio de logs '{logsDirectory}': {ex.Message}");
+}
+
+var logFilePath = Path.Combine(logsDirectory, "log-.txt");
+
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
     .Enrich.FromLogContext()    
     .WriteTo.Console(outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
     .WriteTo.File(
-        path: "Logs/log-.txt",
+        path: logFilePath,
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 14,
         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
@@ -37,6 +50,8 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+try
+{
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -167,18 +182,17 @@ app.MapFallbackToFile("index.html", new StaticFileOptions
     FileProvider = new PhysicalFileProvider(angularPath)
 });
 
-try
-{
-    var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
-    var trayLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("WindowsTray");
-    WindowsTrayHost.Start(lifetime, app.Configuration, trayLogger);
+var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+var trayLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("WindowsTray");
+WindowsTrayHost.Start(lifetime, app.Configuration, trayLogger);
 
-    Log.Information("Starting web host");
-    app.Run();
+Log.Information("Starting web host");
+app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Host terminated unexpectedly");
+    Log.Fatal(ex, "La aplicación falló durante el arranque o la ejecución del host");
+    throw;
 }
 finally
 {
