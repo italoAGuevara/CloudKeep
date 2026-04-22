@@ -10,6 +10,7 @@ export interface OrigenRow {
   name: string;
   path: string;
   description: string;
+  filtrosExclusiones: string;
 }
 
 interface OrigenApiDto {
@@ -17,6 +18,7 @@ interface OrigenApiDto {
   nombre: string;
   ruta: string;
   descripcion: string;
+  filtrosExclusiones: string;
 }
 
 interface RutaValidaApiDto {
@@ -81,8 +83,8 @@ export class OriginsService {
   }
 
   /** Obtiene o crea un origen con esa ruta (misma validación que validarRuta). */
-  asegurarPorRuta(ruta: string): Observable<OrigenRow> {
-    return this.http.post<unknown>(`${API_ORIGENES}/asegurar-por-ruta`, { ruta }).pipe(
+  asegurarPorRuta(ruta: string, filtrosExclusiones?: string): Observable<OrigenRow> {
+    return this.http.post<unknown>(`${API_ORIGENES}/asegurar-por-ruta`, { ruta, filtrosExclusiones }).pipe(
       map((res) => this.fromApi(unwrapApiDetails<OrigenApiDto>(res))),
       catchError((err) => {
         this.toast.show(messageFromHttpError(err), 'error');
@@ -97,6 +99,7 @@ export class OriginsService {
       name: o.nombre,
       path: o.ruta ?? '',
       description: o.descripcion ?? '',
+      filtrosExclusiones: o.filtrosExclusiones ?? '',
     };
   }
 }

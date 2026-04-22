@@ -92,6 +92,16 @@
           />
           <div class="form-text">Debe existir como carpeta en ese servidor. Puedes usar «Comprobar carpeta» o continuar con «Siguiente», que validará la ruta automáticamente.</div>
         </div>
+        <div class="mb-3">
+          <label class="form-label fw-500">Exclusiones (opcional)</label>
+          <textarea
+            class="form-control font-monospace"
+            [(ngModel)]="formOrigenExclusiones"
+            rows="3"
+            placeholder="Ej: .tmp; node_modules; logs\debug"
+          ></textarea>
+          <div class="form-text">Se aplican durante el respaldo. Puedes separar patrones con coma, punto y coma o salto de línea.</div>
+        </div>
         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
           <button
             type="button"

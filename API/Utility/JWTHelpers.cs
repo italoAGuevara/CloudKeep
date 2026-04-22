@@ -26,8 +26,8 @@ namespace API.Utility
 
             // 4. Configurar el Token
             var token = new JwtSecurityToken(
-                issuer: "tu-app.com",
-                audience: "tu-app.com",
+                issuer: "CloudKeep",
+                audience: "CloudKeep",
                 claims: claims,
                 expires: DateTime.Now.AddHours(2), // Duración
                 signingCredentials: creds

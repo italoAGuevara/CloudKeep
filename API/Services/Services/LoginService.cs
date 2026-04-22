@@ -46,8 +46,10 @@ namespace API.Services.Services
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false, // Ajustar según necesidad
-                    ValidateAudience = false,
+                    ValidateIssuer = true, 
+                    ValidIssuer = "CloudKeep",
+                    ValidateAudience = true,
+                    ValidAudience = "CloudKeep",
                     ClockSkew = TimeSpan.Zero
                 }, out SecurityToken validatedToken);
 

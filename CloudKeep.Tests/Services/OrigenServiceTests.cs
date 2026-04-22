@@ -74,6 +74,54 @@ public class OrigenServiceTests
     }
 
     [Fact]
+    public async Task AsegurarPorRutaAsync_creates_origen_with_exclusiones()
+    {
+        using var db = new TestAppDatabase();
+        var sut = new OrigenService(db.Context, ServiceTestHarness.CreateLogMock().Object);
+        var temp = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"ck_orig_{Guid.NewGuid():N}")).FullName;
+        try
+        {
+            var res = await sut.AsegurarPorRutaAsync(temp, ".tmp, logs; cache");
+            Assert.Equal(".tmp;logs;cache", res.FiltrosExclusiones);
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(temp, true);
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    [Fact]
+    public async Task AsegurarPorRutaAsync_updates_exclusiones_when_origen_exists()
+    {
+        using var db = new TestAppDatabase();
+        var sut = new OrigenService(db.Context, ServiceTestHarness.CreateLogMock().Object);
+        var temp = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"ck_orig_{Guid.NewGuid():N}")).FullName;
+        try
+        {
+            var first = await sut.AsegurarPorRutaAsync(temp, ".tmp");
+            var second = await sut.AsegurarPorRutaAsync(temp, ".tmp;logs");
+            Assert.Equal(first.Id, second.Id);
+            Assert.Equal(".tmp;logs", second.FiltrosExclusiones);
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(temp, true);
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    [Fact]
     public async Task Delete_returns_false_when_missing()
     {
         using var db = new TestAppDatabase();

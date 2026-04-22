@@ -14,5 +14,5 @@ public interface IOrigenService
     Task<RutaValidaResponse> ValidarRutaAsync(string ruta);
 
     /// <summary>Obtiene un origen por ruta (coincidencia sin distinguir mayúsculas) o lo crea si no existe.</summary>
-    Task<OrigenResponse> AsegurarPorRutaAsync(string ruta);
+    Task<OrigenResponse> AsegurarPorRutaAsync(string ruta, string? filtrosExclusiones = null);
 }

@@ -109,12 +109,28 @@ public class OrigenService : IOrigenService
         return Task.FromResult(new RutaValidaResponse(normalized));
     }
 
-    public async Task<OrigenResponse> AsegurarPorRutaAsync(string ruta)
+    public async Task<OrigenResponse> AsegurarPorRutaAsync(string ruta, string? filtrosExclusiones = null)
     {
         var normalized = NormalizeAndEnsureDirectoryExists(ruta);
+        var normalizedFiltros = NormalizeFiltrosExclusiones(filtrosExclusiones);
         var existing = await FindByRutaCaseInsensitiveAsync(normalized);
         if (existing is not null)
+        {
+            if (normalizedFiltros is not null
+                && !string.Equals(existing.FiltrosExclusiones, normalizedFiltros, StringComparison.Ordinal))
+            {
+                var antes = SnapshotOrigen(existing);
+                existing.FiltrosExclusiones = normalizedFiltros;
+                existing.FechaModificacion = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                await _logAcciones.RegistrarAsync(
+                    TablasAfectadas.Origen,
+                    AccionLog.Update,
+                    antes,
+                    SnapshotOrigen(existing));
+            }
             return MapToResponse(existing);
+        }
 
         var nombre = await BuildUniqueNombreFromPathAsync(normalized);
         var entity = new Origen
@@ -123,7 +139,7 @@ public class OrigenService : IOrigenService
             Ruta = normalized,
             Descripcion = $"Respaldo desde carpeta local.",
             TamanoMaximo = string.Empty,
-            FiltrosExclusiones = string.Empty
+            FiltrosExclusiones = normalizedFiltros ?? string.Empty
         };
         _context.Origenes.Add(entity);
         await _context.SaveChangesAsync();
@@ -156,9 +172,21 @@ public class OrigenService : IOrigenService
 
     private async Task<Origen?> FindByRutaCaseInsensitiveAsync(string normalizedFullPath)
     {
-        var list = await _context.Origenes.AsNoTracking().ToListAsync();
+        var list = await _context.Origenes.ToListAsync();
         return list.FirstOrDefault(o =>
             string.Equals(o.Ruta.Trim(), normalizedFullPath, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string? NormalizeFiltrosExclusiones(string? raw)
+    {
+        if (raw is null)
+            return null;
+
+        return string.Join(
+            ";",
+            raw.Split(new[] { ';', ',', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0));
     }
 
     private async Task<string> BuildUniqueNombreFromPathAsync(string fullPath)

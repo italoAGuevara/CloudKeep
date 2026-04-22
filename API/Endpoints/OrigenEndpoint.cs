@@ -55,9 +55,9 @@ public static class OrigenEndpoint
         return Results.Ok(res);
     }
 
-    private static async Task<IResult> AsegurarOrigenPorRuta(RutaOrigenRequest request, IOrigenService origenService)
+    private static async Task<IResult> AsegurarOrigenPorRuta(AsegurarOrigenPorRutaRequest request, IOrigenService origenService)
     {
-        var origen = await origenService.AsegurarPorRutaAsync(request.Ruta);
+        var origen = await origenService.AsegurarPorRutaAsync(request.Ruta, request.FiltrosExclusiones);
         return Results.Ok(origen);
     }
 

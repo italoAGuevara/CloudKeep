@@ -99,6 +99,8 @@ export class JobWizardComponent implements OnInit {
   formDestinoId: number | null = null;
   /** Ruta de carpeta local; la existencia se valida en el servidor (donde corre la API). */
   formOrigenRuta = '';
+  /** Patrones excluidos separados por coma, punto y coma o salto de línea. */
+  formOrigenExclusiones = '';
 
   formScheduleType: 'daily' | 'weekly' | 'monthly' = 'daily';
   formScheduleHour = 2;
@@ -136,6 +138,7 @@ export class JobWizardComponent implements OnInit {
     this.formEnabled = true;
     this.formDestinoId = null;
     this.formOrigenRuta = '';
+    this.formOrigenExclusiones = '';
     this.origenPathValidated.set(false);
     this.formScheduleType = 'daily';
     this.formScheduleHour = 2;
@@ -161,6 +164,7 @@ export class JobWizardComponent implements OnInit {
           this.formEnabled = job.enabled;
           this.formDestinoId = job.destinoId;
           this.formOrigenRuta = origen?.path ?? '';
+          this.formOrigenExclusiones = origen?.filtrosExclusiones ?? '';
           this.origenPathValidated.set(!!origen?.path);
           this.formScriptPreId = job.scriptPreId;
           this.formScriptPostId = job.scriptPostId;
@@ -209,6 +213,7 @@ export class JobWizardComponent implements OnInit {
     }
 
     const ruta = this.formOrigenRuta.trim();
+    const filtrosExclusiones = this.formOrigenExclusiones.trim();
     const basePayload = {
       nombre: this.formName.trim(),
       descripcion: this.formDescription.trim(),
@@ -225,7 +230,7 @@ export class JobWizardComponent implements OnInit {
     const editId = this.editingJobId();
 
     this.originsService
-      .asegurarPorRuta(ruta)
+      .asegurarPorRuta(ruta, filtrosExclusiones)
       .pipe(
         switchMap((origen) => {
           if (editId != null) {
