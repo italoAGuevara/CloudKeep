@@ -61,8 +61,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = "tu-app.com",
-            ValidAudience = "tu-app.com",
+            ValidIssuer = "CloudKeep",
+            ValidAudience = "CloudKeep",
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes("Tu_Llave_Super_Secreta_De_Al_Menos_32_Chars!"))
         };
