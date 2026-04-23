@@ -19,5 +19,11 @@ public record TrabajoResponse(
     [property: JsonPropertyName("procesando")] bool Procesando,
     [property: JsonPropertyName("estatusPrevio")] string EstatusPrevio,
     [property: JsonPropertyName("fechaCreacion")] DateTime FechaCreacion,
-    [property: JsonPropertyName("fechaModificacion")] DateTime FechaModificacion
+    [property: JsonPropertyName("fechaModificacion")] DateTime FechaModificacion,
+    [property: JsonPropertyName("copiaTamanoMinBytes")] long? CopiaTamanoMinBytes,
+    [property: JsonPropertyName("copiaTamanoMaxBytes")] long? CopiaTamanoMaxBytes,
+    [property: JsonPropertyName("copiaCreacionDesdeUtc")] DateTime? CopiaCreacionDesdeUtc,
+    [property: JsonPropertyName("copiaCreacionHastaUtc")] DateTime? CopiaCreacionHastaUtc,
+    [property: JsonPropertyName("copiaActualizacionDesdeUtc")] DateTime? CopiaActualizacionDesdeUtc,
+    [property: JsonPropertyName("copiaActualizacionHastaUtc")] DateTime? CopiaActualizacionHastaUtc
 );

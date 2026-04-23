@@ -62,6 +62,14 @@ public class TrabajoService : ITrabajoService
             request.PreDetenerEnFallo ?? false,
             request.PostDetenerEnFallo ?? false);
 
+        ValidateCopiaFiltros(
+            request.CopiaTamanoMinBytes,
+            request.CopiaTamanoMaxBytes,
+            request.CopiaCreacionDesdeUtc,
+            request.CopiaCreacionHastaUtc,
+            request.CopiaActualizacionDesdeUtc,
+            request.CopiaActualizacionHastaUtc);
+
         var entity = new Trabajo
         {
             Nombre = request.Nombre.Trim(),
@@ -69,7 +77,13 @@ public class TrabajoService : ITrabajoService
             TrabajosOrigenDestinoId = linkId,
             TrabajosScriptsId = scriptsId,
             CronExpression = request.CronExpression.Trim(),
-            Activo = request.Activo ?? true
+            Activo = request.Activo ?? true,
+            CopiaTamanoMinBytes = request.CopiaTamanoMinBytes,
+            CopiaTamanoMaxBytes = request.CopiaTamanoMaxBytes,
+            CopiaCreacionDesdeUtc = NormalizeFilterUtc(request.CopiaCreacionDesdeUtc),
+            CopiaCreacionHastaUtc = NormalizeFilterUtc(request.CopiaCreacionHastaUtc),
+            CopiaActualizacionDesdeUtc = NormalizeFilterUtc(request.CopiaActualizacionDesdeUtc),
+            CopiaActualizacionHastaUtc = NormalizeFilterUtc(request.CopiaActualizacionHastaUtc)
         };
         _context.Trabajos.Add(entity);
         await _context.SaveChangesAsync();
@@ -150,6 +164,23 @@ public class TrabajoService : ITrabajoService
             entity.TrabajosScripts.FechaModificacion = DateTime.UtcNow;
         }
 
+        if (request.SincronizarFiltrosCopia == true)
+        {
+            ValidateCopiaFiltros(
+                request.CopiaTamanoMinBytes,
+                request.CopiaTamanoMaxBytes,
+                request.CopiaCreacionDesdeUtc,
+                request.CopiaCreacionHastaUtc,
+                request.CopiaActualizacionDesdeUtc,
+                request.CopiaActualizacionHastaUtc);
+            entity.CopiaTamanoMinBytes = request.CopiaTamanoMinBytes;
+            entity.CopiaTamanoMaxBytes = request.CopiaTamanoMaxBytes;
+            entity.CopiaCreacionDesdeUtc = NormalizeFilterUtc(request.CopiaCreacionDesdeUtc);
+            entity.CopiaCreacionHastaUtc = NormalizeFilterUtc(request.CopiaCreacionHastaUtc);
+            entity.CopiaActualizacionDesdeUtc = NormalizeFilterUtc(request.CopiaActualizacionDesdeUtc);
+            entity.CopiaActualizacionHastaUtc = NormalizeFilterUtc(request.CopiaActualizacionHastaUtc);
+        }
+
         entity.FechaModificacion = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         await _logAcciones.RegistrarAsync(TablasAfectadas.Trabajo, AccionLog.Update, antes, SnapshotTrabajo(entity));
@@ -192,7 +223,13 @@ public class TrabajoService : ITrabajoService
             t.Procesando,
             t.EstatusPrevio,
             t.FechaCreacion,
-            t.FechaModificacion
+            t.FechaModificacion,
+            t.CopiaTamanoMinBytes,
+            t.CopiaTamanoMaxBytes,
+            t.CopiaCreacionDesdeUtc,
+            t.CopiaCreacionHastaUtc,
+            t.CopiaActualizacionDesdeUtc,
+            t.CopiaActualizacionHastaUtc
         };
     }
 
@@ -217,7 +254,13 @@ public class TrabajoService : ITrabajoService
             t.Procesando,
             t.EstatusPrevio,
             t.FechaCreacion,
-            t.FechaModificacion
+            t.FechaModificacion,
+            t.CopiaTamanoMinBytes,
+            t.CopiaTamanoMaxBytes,
+            t.CopiaCreacionDesdeUtc,
+            t.CopiaCreacionHastaUtc,
+            t.CopiaActualizacionDesdeUtc,
+            t.CopiaActualizacionHastaUtc
         );
     }
 
@@ -285,5 +328,39 @@ public class TrabajoService : ITrabajoService
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new BadRequestException($"{fieldName} es obligatorio.");
+    }
+
+    private static void ValidateCopiaFiltros(
+        long? tamMin,
+        long? tamMax,
+        DateTime? creDesde,
+        DateTime? creHasta,
+        DateTime? modDesde,
+        DateTime? modHasta)
+    {
+        if (tamMin is < 0)
+            throw new BadRequestException("copiaTamanoMinBytes no puede ser negativo.");
+        if (tamMax is < 0)
+            throw new BadRequestException("copiaTamanoMaxBytes no puede ser negativo.");
+        if (tamMin is { } mn && tamMax is { } mx && mn > mx)
+            throw new BadRequestException("copiaTamanoMinBytes no puede ser mayor que copiaTamanoMaxBytes.");
+        if (creDesde is { } c0 && creHasta is { } c1 && c0 > c1)
+            throw new BadRequestException("copiaCreacionDesdeUtc no puede ser posterior a copiaCreacionHastaUtc.");
+        if (modDesde is { } m0 && modHasta is { } m1 && m0 > m1)
+            throw new BadRequestException("copiaActualizacionDesdeUtc no puede ser posterior a copiaActualizacionHastaUtc.");
+    }
+
+    /// <summary>Normaliza instantes de filtro a UTC (la comparación en disco usa CreationTimeUtc / LastWriteTimeUtc).</summary>
+    private static DateTime? NormalizeFilterUtc(DateTime? value)
+    {
+        if (value is null)
+            return null;
+        var v = value.Value;
+        return v.Kind switch
+        {
+            DateTimeKind.Utc => v,
+            DateTimeKind.Local => v.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(v, DateTimeKind.Utc)
+        };
     }
 }

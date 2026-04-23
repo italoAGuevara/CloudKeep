@@ -19,9 +19,24 @@ export interface Job {
   preDetenerEnFallo: boolean;
   postDetenerEnFallo: boolean;
   procesando: boolean;
+  copiaTamanoMinBytes: number | null;
+  copiaTamanoMaxBytes: number | null;
+  copiaCreacionDesdeUtc: string | null;
+  copiaCreacionHastaUtc: string | null;
+  copiaActualizacionDesdeUtc: string | null;
+  copiaActualizacionHastaUtc: string | null;
 }
 
-export interface CreateTrabajoPayload {
+export interface TrabajoCopiaFiltrosApi {
+  copiaTamanoMinBytes?: number | null;
+  copiaTamanoMaxBytes?: number | null;
+  copiaCreacionDesdeUtc?: string | null;
+  copiaCreacionHastaUtc?: string | null;
+  copiaActualizacionDesdeUtc?: string | null;
+  copiaActualizacionHastaUtc?: string | null;
+}
+
+export interface CreateTrabajoPayload extends TrabajoCopiaFiltrosApi {
   nombre: string;
   descripcion: string;
   origenId: number;
@@ -55,6 +70,14 @@ export type UpdateTrabajoPayload = Partial<{
   estatusPrevio: string;
   /** Debe ser true al guardar desde el asistente para aplicar scripts (incluido dejarlos vacíos). */
   sincronizarScripts: boolean;
+  /** True desde el asistente para persistir los seis filtros de copia (null en cada uno = sin límite). */
+  sincronizarFiltrosCopia: boolean;
+  copiaTamanoMinBytes: number | null;
+  copiaTamanoMaxBytes: number | null;
+  copiaCreacionDesdeUtc: string | null;
+  copiaCreacionHastaUtc: string | null;
+  copiaActualizacionDesdeUtc: string | null;
+  copiaActualizacionHastaUtc: string | null;
 }>;
 
 interface TrabajoApiDto {
@@ -75,6 +98,12 @@ interface TrabajoApiDto {
   estatusPrevio: string;
   fechaCreacion: string;
   fechaModificacion: string;
+  copiaTamanoMinBytes?: number | null;
+  copiaTamanoMaxBytes?: number | null;
+  copiaCreacionDesdeUtc?: string | null;
+  copiaCreacionHastaUtc?: string | null;
+  copiaActualizacionDesdeUtc?: string | null;
+  copiaActualizacionHastaUtc?: string | null;
 }
 
 interface EjecutarTrabajoApiDto {
@@ -99,6 +128,12 @@ function fromApi(d: TrabajoApiDto): Job {
     preDetenerEnFallo: !!d.preDetenerEnFallo,
     postDetenerEnFallo: !!d.postDetenerEnFallo,
     procesando: !!d.procesando,
+    copiaTamanoMinBytes: d.copiaTamanoMinBytes ?? null,
+    copiaTamanoMaxBytes: d.copiaTamanoMaxBytes ?? null,
+    copiaCreacionDesdeUtc: d.copiaCreacionDesdeUtc ?? null,
+    copiaCreacionHastaUtc: d.copiaCreacionHastaUtc ?? null,
+    copiaActualizacionDesdeUtc: d.copiaActualizacionDesdeUtc ?? null,
+    copiaActualizacionHastaUtc: d.copiaActualizacionHastaUtc ?? null,
   };
 }
 
@@ -150,6 +185,12 @@ export class JobsService {
       postDetenerEnFallo: payload.postDetenerEnFallo ?? false,
       cronExpression: payload.cronExpression.trim(),
       activo: payload.activo ?? true,
+      copiaTamanoMinBytes: payload.copiaTamanoMinBytes ?? null,
+      copiaTamanoMaxBytes: payload.copiaTamanoMaxBytes ?? null,
+      copiaCreacionDesdeUtc: payload.copiaCreacionDesdeUtc ?? null,
+      copiaCreacionHastaUtc: payload.copiaCreacionHastaUtc ?? null,
+      copiaActualizacionDesdeUtc: payload.copiaActualizacionDesdeUtc ?? null,
+      copiaActualizacionHastaUtc: payload.copiaActualizacionHastaUtc ?? null,
     };
     return this.http.post<unknown>(API_TRABAJOS, body).pipe(
       map((res) => fromApi(unwrapApiDetails<TrabajoApiDto>(res))),

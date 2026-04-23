@@ -97,6 +97,7 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
                     origen.FiltrosExclusiones,
                     destino,
                     trabajo.Nombre,
+                    CopiaArchivosFiltros.FromTrabajo(trabajo),
                     s => _credentialProtector.Unprotect(s),
                     cancellationToken);
             }

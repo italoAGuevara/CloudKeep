@@ -24,6 +24,7 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
         string filtrosExclusiones,
         Destino destino,
         string trabajoNombre,
+        CopiaArchivosFiltros? archivoFiltros,
         Func<string, string> unprotectSecret,
         CancellationToken cancellationToken = default)
     {
@@ -39,6 +40,7 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
                 destino,
                 destino.CarpetaDestino,
                 exclusionPatterns,
+                archivoFiltros,
                 unprotectSecret,
                 cancellationToken);
         }
@@ -52,6 +54,7 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
                 destino,
                 $"{jobSegment}-{stamp}",
                 exclusionPatterns,
+                archivoFiltros,
                 unprotectSecret,
                 cancellationToken);
         }
@@ -66,6 +69,7 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
                 destino,
                 destino.CarpetaDestino,
                 exclusionPatterns,
+                archivoFiltros,
                 unprotectSecret,
                 cancellationToken);
         }
@@ -78,6 +82,7 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
         Destino destino,
         string keyPrefix,
         IReadOnlyList<string> exclusionPatterns,
+        CopiaArchivosFiltros? archivoFiltros,
         Func<string, string> unprotectSecret,
         CancellationToken cancellationToken)
     {
@@ -130,6 +135,8 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
                 var relative = Path.GetRelativePath(rootPath, filePath);
                 if (ShouldExclude(relative, exclusionPatterns))
                     continue;
+                if (!PasaFiltrosMetadatos(filePath, archivoFiltros))
+                    continue;
 
                 var key = keyPrefix + NormalizeS3Key(relative);
                 try
@@ -175,6 +182,7 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
         Destino destino,
         string blobPrefix,
         IReadOnlyList<string> exclusionPatterns,
+        CopiaArchivosFiltros? archivoFiltros,
         Func<string, string> unprotectSecret,
         CancellationToken cancellationToken)
     {
@@ -211,6 +219,8 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
             cancellationToken.ThrowIfCancellationRequested();
             var relative = Path.GetRelativePath(rootPath, filePath);
             if (ShouldExclude(relative, exclusionPatterns))
+                continue;
+            if (!PasaFiltrosMetadatos(filePath, archivoFiltros))
                 continue;
 
             var blobName = blobPrefix + NormalizeS3Key(relative);
@@ -257,6 +267,7 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
         Destino destino,
         string runFolderName,
         IReadOnlyList<string> exclusionPatterns,
+        CopiaArchivosFiltros? archivoFiltros,
         Func<string, string> unprotectSecret,
         CancellationToken cancellationToken)
     {
@@ -312,6 +323,8 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
             cancellationToken.ThrowIfCancellationRequested();
             var relative = Path.GetRelativePath(rootPath, filePath);
             if (ShouldExclude(relative, exclusionPatterns))
+                continue;
+            if (!PasaFiltrosMetadatos(filePath, archivoFiltros))
                 continue;
 
             var dirPart = Path.GetDirectoryName(relative);
@@ -448,6 +461,17 @@ public sealed class DestinoToCloudCopier : IDestinoToCloudCopier
             .Select(s => s.Trim())
             .Where(s => s.Length > 0)
             .ToArray();
+    }
+
+    private static bool PasaFiltrosMetadatos(string filePath, CopiaArchivosFiltros? filtros)
+    {
+        if (filtros is null)
+            return true;
+        var info = new FileInfo(filePath);
+        return filtros.PermiteArchivo(
+            info.Length,
+            info.CreationTimeUtc,
+            info.LastWriteTimeUtc);
     }
 
     private static bool ShouldExclude(string relativePath, IReadOnlyList<string> patterns)

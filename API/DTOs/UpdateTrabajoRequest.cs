@@ -16,5 +16,12 @@ public record UpdateTrabajoRequest(
     [property: JsonPropertyName("procesando")] bool? Procesando,
     [property: JsonPropertyName("estatusPrevio")] string? EstatusPrevio,
     /// <summary>Si es true, scriptPreId y scriptPostId sustituyen el estado de scripts (null = sin script).</summary>
-    [property: JsonPropertyName("sincronizarScripts")] bool? SincronizarScripts
+    [property: JsonPropertyName("sincronizarScripts")] bool? SincronizarScripts,
+    [property: JsonPropertyName("sincronizarFiltrosCopia")] bool? SincronizarFiltrosCopia = null,
+    [property: JsonPropertyName("copiaTamanoMinBytes")] long? CopiaTamanoMinBytes = null,
+    [property: JsonPropertyName("copiaTamanoMaxBytes")] long? CopiaTamanoMaxBytes = null,
+    [property: JsonPropertyName("copiaCreacionDesdeUtc")] DateTime? CopiaCreacionDesdeUtc = null,
+    [property: JsonPropertyName("copiaCreacionHastaUtc")] DateTime? CopiaCreacionHastaUtc = null,
+    [property: JsonPropertyName("copiaActualizacionDesdeUtc")] DateTime? CopiaActualizacionDesdeUtc = null,
+    [property: JsonPropertyName("copiaActualizacionHastaUtc")] DateTime? CopiaActualizacionHastaUtc = null
 );

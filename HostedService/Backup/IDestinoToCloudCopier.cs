@@ -13,6 +13,7 @@ public interface IDestinoToCloudCopier
         string filtrosExclusiones,
         Destino destino,
         string trabajoNombre,
+        CopiaArchivosFiltros? archivoFiltros,
         Func<string, string> unprotectSecret,
         CancellationToken cancellationToken = default);
 }

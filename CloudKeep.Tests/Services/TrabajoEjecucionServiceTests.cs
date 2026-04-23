@@ -55,6 +55,7 @@ public class TrabajoEjecucionServiceTests
                 It.IsAny<string>(),
                 It.IsAny<Destino>(),
                 It.IsAny<string>(),
+                It.IsAny<CopiaArchivosFiltros?>(),
                 It.IsAny<Func<string, string>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(7);
@@ -110,6 +111,7 @@ public class TrabajoEjecucionServiceTests
                     It.IsAny<string>(),
                     It.IsAny<Destino>(),
                     It.IsAny<string>(),
+                    It.IsAny<CopiaArchivosFiltros?>(),
                     It.IsAny<Func<string, string>>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(1);
@@ -134,6 +136,7 @@ public class TrabajoEjecucionServiceTests
                     It.IsAny<string>(),
                     It.IsAny<Destino>(),
                     It.IsAny<string>(),
+                    It.IsAny<CopiaArchivosFiltros?>(),
                     It.IsAny<Func<string, string>>(),
                     It.IsAny<CancellationToken>()),
                 Times.Never);

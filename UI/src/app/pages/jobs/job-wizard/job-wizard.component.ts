@@ -8,6 +8,7 @@ import { ToastService } from '../../../services/toast.service';
 import { DestinationsService } from '../../../services/destinations.service';
 import { OriginsService } from '../../../services/origins.service';
 import { JobsService } from '../../../services/jobs.service';
+import type { TrabajoCopiaFiltrosApi } from '../../../services/jobs.service';
 
 const WEEKDAY_LABELS = [
   { value: 0, label: 'D' },
@@ -56,6 +57,31 @@ function applyCronToForm(
     return;
   }
   target.formScheduleType = 'daily';
+}
+
+const BYTES_PER_MIB = 1024 * 1024;
+
+function bytesToMiBInput(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return '';
+  const x = v / BYTES_PER_MIB;
+  if (x === 0) return '0';
+  return x.toFixed(4).replace(/\.?0+$/, '');
+}
+
+function isoUtcToDatetimeLocalValue(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function localDatetimeToIsoUtc(s: string): string | null {
+  const t = s?.trim();
+  if (!t) return null;
+  const d = new Date(t);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
 }
 
 @Component({
@@ -113,6 +139,14 @@ export class JobWizardComponent implements OnInit {
   formPreDetenerEnFallo = false;
   formPostDetenerEnFallo = false;
 
+  /** Tamaño mínimo en MiB (vacío = sin filtro). */
+  formCopiaTamMinMb = '';
+  formCopiaTamMaxMb = '';
+  formCopiaCreacionDesde = '';
+  formCopiaCreacionHasta = '';
+  formCopiaActualizacionDesde = '';
+  formCopiaActualizacionHasta = '';
+
   ngOnInit(): void {
     this.scriptsService.loadAll();
     this.destinationsService.loadAll();
@@ -149,6 +183,12 @@ export class JobWizardComponent implements OnInit {
     this.formScriptPostId = null;
     this.formPreDetenerEnFallo = false;
     this.formPostDetenerEnFallo = false;
+    this.formCopiaTamMinMb = '';
+    this.formCopiaTamMaxMb = '';
+    this.formCopiaCreacionDesde = '';
+    this.formCopiaCreacionHasta = '';
+    this.formCopiaActualizacionDesde = '';
+    this.formCopiaActualizacionHasta = '';
     this.currentStep = 0;
   }
 
@@ -170,6 +210,12 @@ export class JobWizardComponent implements OnInit {
           this.formScriptPostId = job.scriptPostId;
           this.formPreDetenerEnFallo = job.preDetenerEnFallo;
           this.formPostDetenerEnFallo = job.postDetenerEnFallo;
+          this.formCopiaTamMinMb = bytesToMiBInput(job.copiaTamanoMinBytes);
+          this.formCopiaTamMaxMb = bytesToMiBInput(job.copiaTamanoMaxBytes);
+          this.formCopiaCreacionDesde = isoUtcToDatetimeLocalValue(job.copiaCreacionDesdeUtc);
+          this.formCopiaCreacionHasta = isoUtcToDatetimeLocalValue(job.copiaCreacionHastaUtc);
+          this.formCopiaActualizacionDesde = isoUtcToDatetimeLocalValue(job.copiaActualizacionDesdeUtc);
+          this.formCopiaActualizacionHasta = isoUtcToDatetimeLocalValue(job.copiaActualizacionHastaUtc);
           applyCronToForm(job.schedule, this);
           this.loadingJob.set(false);
         },
@@ -202,7 +248,65 @@ export class JobWizardComponent implements OnInit {
     if (!this.formDescription.trim()) return 'La descripción es obligatoria.';
     if (this.formDestinoId == null) return 'Selecciona un destino.';
     if (!this.formOrigenRuta.trim()) return 'Indica la ruta de la carpeta de respaldo.';
+    return this.validateCopiaFiltrosForm();
+  }
+
+  private validateCopiaFiltrosForm(): string | null {
+    return this.parseCopiaFiltrosForm();
+  }
+
+  /** Devuelve mensaje de error o null si los filtros opcionales son coherentes. */
+  private parseCopiaFiltrosForm(): string | null {
+    const parseMb = (raw: string): number | null | 'bad' => {
+      const t = raw.trim();
+      if (!t) return null;
+      const n = Number(t.replace(',', '.'));
+      if (!Number.isFinite(n) || n < 0) return 'bad';
+      return Math.round(n * BYTES_PER_MIB);
+    };
+
+    const minR = parseMb(this.formCopiaTamMinMb);
+    const maxR = parseMb(this.formCopiaTamMaxMb);
+    if (minR === 'bad' || maxR === 'bad')
+      return 'Los tamaños en MiB deben ser números mayores o iguales a cero.';
+    const minB = minR;
+    const maxB = maxR;
+    if (minB != null && maxB != null && minB > maxB)
+      return 'El tamaño mínimo (MiB) no puede ser mayor que el tamaño máximo (MiB).';
+
+    const c0 = localDatetimeToIsoUtc(this.formCopiaCreacionDesde);
+    const c1 = localDatetimeToIsoUtc(this.formCopiaCreacionHasta);
+    if (this.formCopiaCreacionDesde.trim() && !c0) return 'Fecha/hora de creación «desde» no válida.';
+    if (this.formCopiaCreacionHasta.trim() && !c1) return 'Fecha/hora de creación «hasta» no válida.';
+    if (c0 && c1 && new Date(c0).getTime() > new Date(c1).getTime())
+      return 'En fecha de creación, «desde» no puede ser posterior a «hasta».';
+
+    const m0 = localDatetimeToIsoUtc(this.formCopiaActualizacionDesde);
+    const m1 = localDatetimeToIsoUtc(this.formCopiaActualizacionHasta);
+    if (this.formCopiaActualizacionDesde.trim() && !m0) return 'Fecha/hora de actualización «desde» no válida.';
+    if (this.formCopiaActualizacionHasta.trim() && !m1) return 'Fecha/hora de actualización «hasta» no válida.';
+    if (m0 && m1 && new Date(m0).getTime() > new Date(m1).getTime())
+      return 'En fecha de actualización, «desde» no puede ser posterior a «hasta».';
+
     return null;
+  }
+
+  private copiaFiltrosApiFromForm(): TrabajoCopiaFiltrosApi {
+    const parseMb = (raw: string): number | null => {
+      const t = raw.trim();
+      if (!t) return null;
+      const n = Number(t.replace(',', '.'));
+      if (!Number.isFinite(n) || n < 0) return null;
+      return Math.round(n * BYTES_PER_MIB);
+    };
+    return {
+      copiaTamanoMinBytes: parseMb(this.formCopiaTamMinMb),
+      copiaTamanoMaxBytes: parseMb(this.formCopiaTamMaxMb),
+      copiaCreacionDesdeUtc: localDatetimeToIsoUtc(this.formCopiaCreacionDesde),
+      copiaCreacionHastaUtc: localDatetimeToIsoUtc(this.formCopiaCreacionHasta),
+      copiaActualizacionDesdeUtc: localDatetimeToIsoUtc(this.formCopiaActualizacionDesde),
+      copiaActualizacionHastaUtc: localDatetimeToIsoUtc(this.formCopiaActualizacionHasta),
+    };
   }
 
   saveJob(): void {
@@ -214,6 +318,7 @@ export class JobWizardComponent implements OnInit {
 
     const ruta = this.formOrigenRuta.trim();
     const filtrosExclusiones = this.formOrigenExclusiones.trim();
+    const copiaFiltros = this.copiaFiltrosApiFromForm();
     const basePayload = {
       nombre: this.formName.trim(),
       descripcion: this.formDescription.trim(),
@@ -224,6 +329,7 @@ export class JobWizardComponent implements OnInit {
       postDetenerEnFallo: this.formPostDetenerEnFallo,
       cronExpression: this.formSchedule,
       activo: this.formEnabled,
+      ...copiaFiltros,
     };
 
     this.saving.set(true);
@@ -238,6 +344,7 @@ export class JobWizardComponent implements OnInit {
               ...basePayload,
               origenId: origen.id,
               sincronizarScripts: true,
+              sincronizarFiltrosCopia: true,
             });
           }
           return this.jobsService.create({
