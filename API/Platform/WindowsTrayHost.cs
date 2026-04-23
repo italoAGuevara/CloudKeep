@@ -18,7 +18,34 @@ internal static class WindowsTrayHost
         if (!OperatingSystem.IsWindows())
             return;
 
+        if (!Environment.UserInteractive)
+        {
+            logger.LogInformation("Entorno no interactivo detectado; se omite bandeja y apertura automática de navegador.");
+            return;
+        }
+
         var browserUrl = ResolveTrayBrowserUrl(configuration);
+        var autoOpenOnStart = ResolveAutoOpenOnStart(configuration);
+
+        if (autoOpenOnStart)
+        {
+            lifetime.ApplicationStarted.Register(() =>
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        // Pequeña espera para evitar abrir antes de que Kestrel quede listo.
+                        await Task.Delay(1200);
+                        OpenBrowser(browserUrl);
+                    }
+                    catch
+                    {
+                        /* ignorar */
+                    }
+                });
+            });
+        }
 
         var thread = new Thread(() => RunTrayThread(lifetime, browserUrl, logger))
         {
@@ -37,6 +64,15 @@ internal static class WindowsTrayHost
             return fromConfig.Trim();
 
         return "http://localhost:4200";
+    }
+
+    /// <summary>Controla si el navegador debe abrirse automáticamente al iniciar la app.</summary>
+    private static bool ResolveAutoOpenOnStart(IConfiguration configuration)
+    {
+        var raw = configuration["Tray:AutoOpenBrowserOnStart"];
+        if (string.IsNullOrWhiteSpace(raw))
+            return true;
+        return bool.TryParse(raw, out var parsed) ? parsed : true;
     }
 
     private static void RunTrayThread(IHostApplicationLifetime lifetime, string browserUrl, ILogger logger)
