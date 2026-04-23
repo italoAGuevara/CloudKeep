@@ -1,6 +1,6 @@
 # Manual de Usuario - CloudKeep
 
-> Version del manual: 1.0  
+> Version del manual: 1.1  
 > Aplicacion: CloudKeep  
 > Sistema operativo objetivo: Windows 11 o superior
 
@@ -148,11 +148,10 @@ Es el modulo principal para definir como, cuando y hacia donde se copia la infor
 3. Definir origen:
    - Ruta de informacion a copiar.
 4. Configurar filtros y exclusiones:
-   - Excluir ocultos.
-   - Excluir archivos de sistema.
-   - Excluir temporales.
-   - Excluir por tamano.
-   - Excluir por patron.
+   - Exclusiones por patron (nombre/ruta).
+   - Filtro por tamano minimo y/o maximo del archivo.
+   - Filtro por fecha de creacion del archivo (desde/hasta).
+   - Filtro por fecha de actualizacion del archivo (desde/hasta).
 5. Asignar destino.
 6. Definir programacion (cronograma).
 7. Asociar scripts PRE y POST.
@@ -160,6 +159,23 @@ Es el modulo principal para definir como, cuando y hacia donde se copia la infor
    - Continuar.
    - Detener trabajo.
 9. Guardar trabajo.
+
+#### Filtros por archivo (nuevo en v1.1)
+En el paso **Origen del respaldo** del wizard, CloudKeep permite filtrar que archivos se copian usando metadatos del archivo:
+
+- **Tamano minimo (MiB)**: solo copia archivos con tamano mayor o igual al valor.
+- **Tamano maximo (MiB)**: solo copia archivos con tamano menor o igual al valor.
+- **Creacion del archivo (desde/hasta)**: compara contra la fecha de creacion del archivo.
+- **Ultima modificacion (desde/hasta)**: compara contra la fecha de ultima actualizacion del archivo.
+
+Reglas de funcionamiento:
+- Todos los filtros son opcionales.
+- Si dejas un campo vacio, ese limite no se aplica.
+- Si defines varios filtros, el archivo debe cumplir **todos** para ser copiado.
+- Los rangos son inclusivos.
+- Si un rango es invalido (por ejemplo, `desde > hasta`), CloudKeep bloquea el guardado y muestra error.
+
+> Nota tecnica: las fechas del formulario se capturan en hora local del equipo cliente y se comparan en UTC en el servidor donde se ejecuta la API.
 
 ### Administrar trabajo
 - Editar configuracion.
@@ -191,6 +207,8 @@ Secuencia de ejecucion:
 3. Envio al destino configurado.
 4. Script POST (si existe).
 5. Registro de trazas y estado final.
+
+Si por filtros no hay archivos que cumplan las condiciones, la ejecucion finaliza correctamente con mensaje informativo (0 archivos copiados).
 
 ### Modulo de trabajo y ejemplo de mensajes
 ![Pendiente: ejecucion manual y estado](./trabajo.jpg)
@@ -253,6 +271,12 @@ Permite gestionar parametros globales de la aplicacion:
 - Verificar que no este ya en estado de ejecucion.
 - Consultar trazas para diagnostico.
 
+### 6.5 Filtros de copia no devuelven archivos
+- Verificar que el tamano minimo no sea mayor al tamano maximo.
+- Validar que la fecha "desde" no sea posterior a la fecha "hasta".
+- Revisar si los rangos de fecha/tamano son demasiado restrictivos.
+- Ejecutar una prueba manual sin filtros para comparar resultados.
+
 ---
 
 ## 7. Alcance funcional y limites
@@ -289,6 +313,7 @@ Permite gestionar parametros globales de la aplicacion:
 - [ ] Destino AWS y/o Azure creado y probado.
 - [ ] Scripts requeridos vinculados y testeados.
 - [ ] Trabajo de respaldo creado.
+- [ ] Filtros por archivo (tamano/fechas) validados segun necesidad.
 - [ ] Primera ejecucion manual exitosa.
 - [ ] Programacion activada.
 - [ ] Verificacion de trazas y alertas.
