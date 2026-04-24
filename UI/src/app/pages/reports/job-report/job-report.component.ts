@@ -39,6 +39,8 @@ export class JobReportComponent implements OnInit {
   historialLoading = signal(false);
   /** Filtro por trabajo: '' = todos */
   filtroTrabajoId: number | '' = '';
+  /** Filtro por actor de ejecución: '' = todos */
+  filtroEjecutadoPor: string = '';
 
   logAcciones = signal<LogAccionUsuarioItem[]>([]);
   logAccionesLoading = signal(false);
@@ -74,6 +76,7 @@ export class JobReportComponent implements OnInit {
     this.executionsReport
       .getHistorial({
         trabajoId: tid === '' ? null : tid,
+        ejecutadoPor: this.filtroEjecutadoPor || null,
         page: this.historialPage(),
         pageSize: this.historialPageSize,
       })
@@ -94,6 +97,16 @@ export class JobReportComponent implements OnInit {
   aplicarFiltroHistorial(): void {
     this.historialPage.set(1);
     this.cargarHistorialEjecuciones();
+  }
+
+  actoresHistorial(): string[] {
+    return Array.from(
+      new Set(
+        this.historial()
+          .map((h) => (h.ejecutadoPor ?? '').trim())
+          .filter((v) => v.length > 0)
+      )
+    ).sort((a, b) => a.localeCompare(b, 'es'));
   }
 
   historialTotalPaginas(): number {

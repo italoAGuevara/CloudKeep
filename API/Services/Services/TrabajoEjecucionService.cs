@@ -35,8 +35,13 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
     public async Task<EjecutarTrabajoResponse> EjecutarManualAsync(
         int trabajoId,
         CancellationToken cancellationToken = default,
-        JobExecutionTrigger trigger = JobExecutionTrigger.Manual)
+        JobExecutionTrigger trigger = JobExecutionTrigger.Manual,
+        string? ejecutadoPor = null)
     {
+        var actor = string.IsNullOrWhiteSpace(ejecutadoPor)
+            ? (trigger == JobExecutionTrigger.Programada ? "Sistema" : "Usuario desconocido")
+            : ejecutadoPor.Trim();
+
         var claimed = await _context.Trabajos
             .Where(t => t.Id == trabajoId && !t.Procesando)
             .ExecuteUpdateAsync(
@@ -77,7 +82,8 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
             Status = BackupStatus.InProgress,
             ErrorMessage = null,
             Trigger = trigger,
-            ArchivosCopiados = null
+            ArchivosCopiados = null,
+            EjecutadoPor = actor
         };
         _context.HistoryBackupExecutions.Add(history);
         await _context.SaveChangesAsync(cancellationToken);
@@ -124,11 +130,12 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
 
             var duracion = DateTime.UtcNow - history.StartTime;
             _logger.LogInformation(
-                "Ejecución de trabajo {TrabajoId} «{NombreTrabajo}» OK. Historial {HistorialId}, disparo {Disparo}, archivos {Archivos}, duración {Duracion}s",
+                "Ejecución de trabajo {TrabajoId} «{NombreTrabajo}» OK. Historial {HistorialId}, disparo {Disparo}, ejecutado por {EjecutadoPor}, archivos {Archivos}, duración {Duracion}s",
                 trabajoId,
                 trabajo.Nombre,
                 history.Id,
                 trigger,
+                actor,
                 copied,
                 Math.Round(duracion.TotalSeconds, 2));
 
@@ -136,7 +143,7 @@ public class TrabajoEjecucionService : ITrabajoEjecucionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Fallo al ejecutar trabajo {TrabajoId} (disparo {Disparo}, historial {HistorialId})", trabajoId, trigger, history.Id);
+            _logger.LogError(ex, "Fallo al ejecutar trabajo {TrabajoId} (disparo {Disparo}, ejecutado por {EjecutadoPor}, historial {HistorialId})", trabajoId, trigger, actor, history.Id);
             var msg = ex is BadRequestException or NotFoundException or ConflictException
                 ? ex.Message
                 : $"Error inesperado: {ex.Message}";

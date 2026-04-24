@@ -16,5 +16,8 @@ namespace HostedService.Entities
 
         /// <summary>Archivos copiados en destino; null si falló antes de completar la copia.</summary>
         public int? ArchivosCopiados { get; set; }
+
+        /// <summary>Usuario que disparó la ejecución ("Sistema" si fue automática).</summary>
+        public string EjecutadoPor { get; set; } = "Sistema";
     }
 }

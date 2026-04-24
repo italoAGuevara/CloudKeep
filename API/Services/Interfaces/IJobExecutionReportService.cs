@@ -6,6 +6,7 @@ public interface IJobExecutionReportService
 {
     Task<EjecucionHistorialListResponse> GetHistorialAsync(
         int? trabajoId,
+        string? ejecutadoPor,
         DateTime? desdeUtc,
         DateTime? hastaUtc,
         int page,

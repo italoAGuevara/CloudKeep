@@ -50,7 +50,11 @@ public sealed class TrabajoCronTickHandler : ITrabajoCronTickHandler
                     "Ejecución programada (cron): trabajo {TrabajoId} «{Nombre}»",
                     t.Id, t.Nombre);
 
-                await _ejecucion.EjecutarManualAsync(t.Id, cancellationToken, JobExecutionTrigger.Programada);
+                await _ejecucion.EjecutarManualAsync(
+                    t.Id,
+                    cancellationToken,
+                    JobExecutionTrigger.Programada,
+                    "Sistema");
             }
             catch (ConflictException)
             {

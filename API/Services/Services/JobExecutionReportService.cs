@@ -20,6 +20,7 @@ public sealed class JobExecutionReportService : IJobExecutionReportService
 
     public async Task<EjecucionHistorialListResponse> GetHistorialAsync(
         int? trabajoId,
+        string? ejecutadoPor,
         DateTime? desdeUtc,
         DateTime? hastaUtc,
         int page,
@@ -37,6 +38,12 @@ public sealed class JobExecutionReportService : IJobExecutionReportService
 
         if (trabajoId is > 0)
             query = query.Where(x => x.h.TrabajoId == trabajoId.Value);
+
+        if (!string.IsNullOrWhiteSpace(ejecutadoPor))
+        {
+            var actor = ejecutadoPor.Trim();
+            query = query.Where(x => x.h.EjecutadoPor == actor);
+        }
 
         if (desdeUtc is not null)
             query = query.Where(x => x.h.StartTime >= desdeUtc.Value);
@@ -83,6 +90,7 @@ public sealed class JobExecutionReportService : IJobExecutionReportService
             estado,
             h.ArchivosCopiados,
             disparo,
+            h.EjecutadoPor,
             h.ErrorMessage);
     }
 }

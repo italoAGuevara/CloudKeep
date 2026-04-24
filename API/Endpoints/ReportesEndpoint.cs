@@ -28,13 +28,21 @@ public static class ReportesEndpoint
     private static async Task<IResult> GetEjecucionesHistorial(
         IJobExecutionReportService reportes,
         int? trabajoId,
+        string? ejecutadoPor,
         DateTime? desdeUtc,
         DateTime? hastaUtc,
         int page = 1,
         int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var result = await reportes.GetHistorialAsync(trabajoId, desdeUtc, hastaUtc, page, pageSize, cancellationToken);
+        var result = await reportes.GetHistorialAsync(
+            trabajoId,
+            ejecutadoPor,
+            desdeUtc,
+            hastaUtc,
+            page,
+            pageSize,
+            cancellationToken);
         return Results.Ok(result);
     }
 }

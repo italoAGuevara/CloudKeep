@@ -1,5 +1,7 @@
 using API.DTOs;
 using API.Services.Interfaces;
+using HostedService.Enums;
+using System.Security.Claims;
 
 namespace API.Endpoints;
 
@@ -50,9 +52,19 @@ public static class TrabajoEndpoint
     private static async Task<IResult> EjecutarTrabajoManual(
         int id,
         ITrabajoEjecucionService ejecucionService,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var result = await ejecucionService.EjecutarManualAsync(id, cancellationToken);
+        var ejecutadoPor =
+            httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            httpContext.User.FindFirstValue("sub") ??
+            "Usuario desconocido";
+
+        var result = await ejecucionService.EjecutarManualAsync(
+            id,
+            cancellationToken,
+            JobExecutionTrigger.Manual,
+            ejecutadoPor);
         return Results.Ok(result);
     }
 }

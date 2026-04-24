@@ -12,6 +12,7 @@ public sealed record EjecucionHistorialItemResponse(
     [property: JsonPropertyName("estado")] string Estado,
     [property: JsonPropertyName("archivosCopiados")] int? ArchivosCopiados,
     [property: JsonPropertyName("disparo")] string Disparo,
+    [property: JsonPropertyName("ejecutadoPor")] string EjecutadoPor,
     [property: JsonPropertyName("errorMessage")] string? ErrorMessage);
 
 public sealed record EjecucionHistorialListResponse(

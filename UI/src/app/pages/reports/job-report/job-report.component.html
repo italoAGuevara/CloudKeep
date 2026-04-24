@@ -55,6 +55,16 @@
             <option [ngValue]="job.id">{{ job.name }}</option>
           }
         </select>
+        <select
+          class="form-select form-select-sm"
+          style="min-width: 11rem"
+          [(ngModel)]="filtroEjecutadoPor"
+          name="filtroEjecutadoPorHistorial">
+          <option [ngValue]="''">Todos los ejecutores</option>
+          @for (actor of actoresHistorial(); track actor) {
+            <option [ngValue]="actor">{{ actor }}</option>
+          }
+        </select>
         <button type="button" class="btn btn-sm btn-outline-primary" (click)="aplicarFiltroHistorial()">Aplicar filtro</button>
       </div>
     </div>
@@ -73,6 +83,7 @@
                 <th>Estado</th>
                 <th>Archivos</th>
                 <th>Disparo</th>
+                <th>Ejecutado por</th>
                 <th>Error / detalle</th>
               </tr>
             </thead>
@@ -92,11 +103,12 @@
                       {{ disparoLabel(row.disparo) }}
                     </span>
                   </td>
+                  <td class="small">{{ row.ejecutadoPor || '—' }}</td>
                   <td class="small text-muted" [title]="row.errorMessage ?? ''">{{ truncarTexto(row.errorMessage, 72) }}</td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="8" class="text-center text-muted py-4">No hay ejecuciones registradas todavía.</td>
+                  <td colspan="9" class="text-center text-muted py-4">No hay ejecuciones registradas todavía.</td>
                 </tr>
               }
             </tbody>

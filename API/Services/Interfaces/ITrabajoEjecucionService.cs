@@ -9,5 +9,6 @@ public interface ITrabajoEjecucionService
     Task<EjecutarTrabajoResponse> EjecutarManualAsync(
         int trabajoId,
         CancellationToken cancellationToken = default,
-        JobExecutionTrigger trigger = JobExecutionTrigger.Manual);
+        JobExecutionTrigger trigger = JobExecutionTrigger.Manual,
+        string? ejecutadoPor = null);
 }
