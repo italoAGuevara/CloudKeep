@@ -84,7 +84,7 @@
                 <th>Archivos</th>
                 <th>Disparo</th>
                 <th>Ejecutado por</th>
-                <th>Error / detalle</th>
+                <th class="error-detail-column">Error / detalle</th>
               </tr>
             </thead>
             <tbody>
@@ -104,7 +104,7 @@
                     </span>
                   </td>
                   <td class="small">{{ row.ejecutadoPor || '—' }}</td>
-                  <td class="small text-muted" [title]="row.errorMessage ?? ''">{{ truncarTexto(row.errorMessage, 72) }}</td>
+                  <td class="small text-muted error-detail-column" [title]="row.errorMessage ?? ''">{{ row.errorMessage || '—' }}</td>
                 </tr>
               } @empty {
                 <tr>

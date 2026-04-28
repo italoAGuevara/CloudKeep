@@ -90,7 +90,11 @@ public class TrabajoService : ITrabajoService
 
         await _context.Entry(entity).Reference(t => t.TrabajosOrigenDestino).LoadAsync();
         await _context.Entry(entity).Reference(t => t.TrabajosScripts).LoadAsync();
-        await _logAcciones.RegistrarAsync(TablasAfectadas.Trabajo, AccionLog.Create, null, SnapshotTrabajo(entity));
+        await _logAcciones.RegistrarAsync(
+            TablasAfectadas.Trabajo,
+            AccionLog.Create,
+            null,
+            await SnapshotTrabajoAsync(entity));
         return MapToResponse(entity);
     }
 
@@ -102,7 +106,7 @@ public class TrabajoService : ITrabajoService
             .FirstOrDefaultAsync(t => t.Id == id);
         if (entity is null) return null;
 
-        var antes = SnapshotTrabajo(entity);
+        var antes = await SnapshotTrabajoAsync(entity);
 
         if (request.Nombre is not null)
         {
@@ -183,7 +187,11 @@ public class TrabajoService : ITrabajoService
 
         entity.FechaModificacion = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        await _logAcciones.RegistrarAsync(TablasAfectadas.Trabajo, AccionLog.Update, antes, SnapshotTrabajo(entity));
+        await _logAcciones.RegistrarAsync(
+            TablasAfectadas.Trabajo,
+            AccionLog.Update,
+            antes,
+            await SnapshotTrabajoAsync(entity));
         return MapToResponse(entity);
     }
 
@@ -194,17 +202,54 @@ public class TrabajoService : ITrabajoService
             .Include(t => t.TrabajosScripts)
             .FirstOrDefaultAsync(t => t.Id == id);
         if (entity is null) return false;
-        var antes = SnapshotTrabajo(entity);
+        var antes = await SnapshotTrabajoAsync(entity);
         _context.Trabajos.Remove(entity);
         await _context.SaveChangesAsync();
         await _logAcciones.RegistrarAsync(TablasAfectadas.Trabajo, AccionLog.Delete, antes, null);
         return true;
     }
 
-    private static object SnapshotTrabajo(Trabajo t)
+    private async Task<object> SnapshotTrabajoAsync(Trabajo t)
     {
         var p = t.TrabajosOrigenDestino;
         var s = t.TrabajosScripts;
+        var origenId = p?.OrigenId;
+        var destinoId = p?.DestinoId;
+        var scriptPreId = s?.ScriptPreId;
+        var scriptPostId = s?.ScriptPostId;
+
+        var origen = origenId is null
+            ? null
+            : await _context.Origenes
+                .AsNoTracking()
+                .Where(x => x.Id == origenId.Value)
+                .Select(x => new { x.Id, x.Nombre, x.Ruta })
+                .FirstOrDefaultAsync();
+
+        var destino = destinoId is null
+            ? null
+            : await _context.Destinos
+                .AsNoTracking()
+                .Where(x => x.Id == destinoId.Value)
+                .Select(x => new { x.Id, x.Nombre, x.TipoDeDestino, x.CarpetaDestino })
+                .FirstOrDefaultAsync();
+
+        var scriptPre = scriptPreId is null
+            ? null
+            : await _context.ScriptConfigurations
+                .AsNoTracking()
+                .Where(x => x.Id == scriptPreId.Value)
+                .Select(x => new { x.Id, x.Nombre, x.ScriptPath, x.Tipo })
+                .FirstOrDefaultAsync();
+
+        var scriptPost = scriptPostId is null
+            ? null
+            : await _context.ScriptConfigurations
+                .AsNoTracking()
+                .Where(x => x.Id == scriptPostId.Value)
+                .Select(x => new { x.Id, x.Nombre, x.ScriptPath, x.Tipo })
+                .FirstOrDefaultAsync();
+
         return new
         {
             t.Id,
@@ -212,10 +257,14 @@ public class TrabajoService : ITrabajoService
             t.Descripcion,
             t.TrabajosOrigenDestinoId,
             t.TrabajosScriptsId,
-            origenId = p?.OrigenId,
-            destinoId = p?.DestinoId,
-            scriptPreId = s?.ScriptPreId,
-            scriptPostId = s?.ScriptPostId,
+            origenId,
+            destinoId,
+            scriptPreId,
+            scriptPostId,
+            origen,
+            destino,
+            scriptPre,
+            scriptPost,
             preDetenerEnFallo = s?.PreDetenerEnFallo,
             postDetenerEnFallo = s?.PostDetenerEnFallo,
             t.CronExpression,

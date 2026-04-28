@@ -17,3 +17,11 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.error-detail-column {
+  min-width: 24rem;
+  max-width: 42rem;
+  white-space: normal;
+  word-break: break-word;
+  vertical-align: top;
+}
