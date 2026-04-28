@@ -122,7 +122,7 @@ Permite vincular scripts para ejecutar acciones PRE y POST respaldo.
 1. Ir al modulo scripts.
 2. Registrar:
    - Nombre.
-   - Ruta del script.
+   - Ruta física donde se encuentra alojado el script.
    - Argumentos (opcional).
 3. Guardar.
 
