@@ -250,28 +250,35 @@ Permite gestionar parametros globales de la aplicacion:
 
 ## 6. Comportamiento en errores frecuentes
 
-### 6.1 Falla de autenticacion
+### 6.1 No se como abrir la aplicación
+- Por defecto la aplicación el `localhost:5271`, abre esa dirección en el navegador del computador.
+- Puedes abrir la aplicación presionando el icon de CloudKeep el cual encuentra en la barra de tareas en el area de notificaciones.
+![Pendiente: pantalla de configuracion](./cloudkeep-icon.png)
+
+
+
+### 6.2 Falla de autenticacion
 - Verifica contrasena.
 - Si cambiaste la contrasena recientemente, usa la mas actual.
 
-### 6.2 Falla de conexion a destino
+### 6.3 Falla de conexion a destino
 - Revisar credenciales.
 - Confirmar bucket/contenedor y region.
 - Validar acceso a internet y firewall/proxy.
 
-### 6.3 Falla al ejecutar script
+### 6.4 Falla al ejecutar script
 - Verificar ruta del script.
 - Verificar permisos de ejecucion del SO.
 - Revisar argumentos enviados.
 - Validar compatibilidad de runtime para `.js`.
 
-### 6.4 Trabajo no se ejecuta en horario
+### 6.5 Trabajo no se ejecuta en horario
 - Confirmar que el trabajo este activo.
 - Revisar programacion.
 - Verificar que no este ya en estado de ejecucion.
 - Consultar trazas para diagnostico.
 
-### 6.5 Filtros de copia no devuelven archivos
+### 6.6 Filtros de copia no devuelven archivos
 - Verificar que el tamano minimo no sea mayor al tamano maximo.
 - Validar que la fecha "desde" no sea posterior a la fecha "hasta".
 - Revisar si los rangos de fecha/tamano son demasiado restrictivos.
