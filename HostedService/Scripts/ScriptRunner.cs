@@ -78,10 +78,11 @@ public sealed class ScriptRunner : IScriptRunner
         }
         catch (OperationCanceledException)
         {
+            await TryKillProcessTreeAsync(process).ConfigureAwait(false);
+
             if (cancellationToken.IsCancellationRequested)
                 throw;
 
-            TryKillProcessTree(process);
             throw new TimeoutException(
                 $"El script superó el tiempo máximo de ejecución ({timeoutMinutes} minutos).");
         }
@@ -92,12 +93,15 @@ public sealed class ScriptRunner : IScriptRunner
             stderr.ToString().TrimEnd());
     }
 
-    private static void TryKillProcessTree(Process process)
+    private static async Task TryKillProcessTreeAsync(Process process)
     {
         try
         {
             if (!process.HasExited)
+            {
                 process.Kill(entireProcessTree: true);
+                await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+            }
         }
         catch (InvalidOperationException)
         {

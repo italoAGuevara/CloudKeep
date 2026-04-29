@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using HostedService.Entities;
 using HostedService.Scripts;
@@ -101,5 +102,84 @@ public class ScriptRunnerTests
                 // best-effort cleanup
             }
         }
+    }
+
+    [Fact]
+    public async Task RunAsync_kills_script_when_cancellation_is_requested_on_windows()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var dir = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"sr_cancel_{Guid.NewGuid():N}"));
+        var pidPath = Path.Combine(dir.FullName, "pid.txt");
+        var scriptPath = Path.Combine(dir.FullName, "sleep.ps1");
+        await File.WriteAllTextAsync(
+            scriptPath,
+            "$PID | Set-Content -Path $args[0]\r\nStart-Sleep -Seconds 30\r\n");
+
+        try
+        {
+            var sut = CreateSut();
+            var script = new ScriptConfiguration { ScriptPath = scriptPath, Tipo = ".ps1", Arguments = pidPath };
+            using var cts = new CancellationTokenSource();
+
+            var runTask = sut.RunAsync(script, cts.Token);
+            var pid = await WaitForPidAsync(pidPath);
+
+            await cts.CancelAsync();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => runTask);
+            await WaitUntilProcessExitsAsync(pid);
+        }
+        finally
+        {
+            try
+            {
+                dir.Delete(true);
+            }
+            catch
+            {
+                // best-effort cleanup
+            }
+        }
+    }
+
+    private static async Task<int> WaitForPidAsync(string pidPath)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        while (!timeout.IsCancellationRequested)
+        {
+            if (File.Exists(pidPath)
+                && int.TryParse((await File.ReadAllTextAsync(pidPath, timeout.Token)).Trim(), out var pid))
+            {
+                return pid;
+            }
+
+            await Task.Delay(50, timeout.Token);
+        }
+
+        throw new TimeoutException("El script no escribió su PID a tiempo.");
+    }
+
+    private static async Task WaitUntilProcessExitsAsync(int pid)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        while (!timeout.IsCancellationRequested)
+        {
+            try
+            {
+                using var process = Process.GetProcessById(pid);
+                if (process.HasExited)
+                    return;
+            }
+            catch (ArgumentException)
+            {
+                return;
+            }
+
+            await Task.Delay(50, timeout.Token);
+        }
+
+        throw new TimeoutException($"El proceso {pid} siguió vivo después de cancelar el script.");
     }
 }
