@@ -65,3 +65,5 @@ Thumbs.db
 desktop.ini
 API/mibase.db-shm
 API/mibase.db-shm
+/API/Logs
+/API/wwwroot/browser
