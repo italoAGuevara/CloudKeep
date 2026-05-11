@@ -9,17 +9,17 @@ public static class TrabajoDemoSeed
 {
     public static void EnsureDemoTrabajo(AppDbContext db, IDestinoCredentialProtector credentialProtector)
     {
-        if (!db.Destinos.Any())
-        {
-            db.Destinos.Add(new Destino
-            {
-                Nombre = "Destino demo S3",
-                TipoDeDestino = "S3",
-                Credenciales = credentialProtector.Protect("{}"),
-                CarpetaDestino = "demo-respaldos/"
-            });
-            db.SaveChanges();
-        }
+        //if (!db.Destinos.Any())
+        //{
+        //    db.Destinos.Add(new Destino
+        //    {
+        //        Nombre = "Destino demo S3",
+        //        TipoDeDestino = "S3",
+        //        Credenciales = credentialProtector.Protect("{}"),
+        //        CarpetaDestino = "demo-respaldos/"
+        //    });
+        //    db.SaveChanges();
+        //}
 
         if (db.Trabajos.Any())
             return;

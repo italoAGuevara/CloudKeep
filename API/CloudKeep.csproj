@@ -6,8 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
     <UseWindowsForms>true</UseWindowsForms>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <!--<PublishAot>true</PublishAot>-->
     <ApplicationIcon>assets\cloudkeep.ico</ApplicationIcon>
+    <SpaRoot>..\UI\</SpaRoot>
+    <SpaDist>$(SpaRoot)dist\ProyectoDeGradoUI\browser\</SpaDist>
   </PropertyGroup>
 
   <!-- Sin ventana de consola en builds Release (cliente); Debug mantiene consola para desarrollo. -->
@@ -40,6 +43,7 @@
     <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
   </ItemGroup>
 
@@ -57,5 +61,18 @@
   <ItemGroup>
     <Folder Include="Features\IsTokenValid\" />
   </ItemGroup>
+
+  <Target Name="PublishAngularApp" AfterTargets="ComputeFilesToPublish">
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm ci" Condition="!Exists('$(SpaRoot)node_modules')" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" />
+
+    <ItemGroup>
+      <AngularDistFiles Include="$(SpaDist)**\*" />
+      <ResolvedFileToPublish Include="@(AngularDistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>wwwroot\browser\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
   
 </Project>

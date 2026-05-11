@@ -9,6 +9,10 @@
 ![Pendiente: requisitos previos](./imgInstaladorSetup.png)
 
 
+- Es muy posible que el Windows Defender no le permita instalar la aplicacion y aparezca la siguiente imagen, utilice la siguiente imagen como guia:
+![Pendiente: requisitos previos](.\windows-defender.png)
+UFGDNet (sf) _Executar o SIGECAD Secretaria_
+https://ajuda.app.ufgd.edu.br/artigo/682
 ---
 
 ## 2. Instalacion de CloudKeep (usuario final)

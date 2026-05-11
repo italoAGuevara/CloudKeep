@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Tests/">
     <Project Path="CloudKeep.Tests/CloudKeep.Tests.csproj" />
+    <Project Path="CloudKeep.SeleniumTests/CloudKeep.SeleniumTests.csproj" />
     <Project Path="HostedService.Tests/HostedService.Tests.csproj" />
   </Folder>
   <Project Path="API/CloudKeep.csproj" />

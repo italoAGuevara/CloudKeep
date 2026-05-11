@@ -8,6 +8,7 @@ using HostedService.Scripts;
 using Infrastructure.DependencyInjection;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -73,7 +74,16 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ILogAccionesUsuarioWriter, LogAccionesUsuarioWriter>();
 builder.Services.AddScoped<ILogAccionesUsuarioQueryService, LogAccionesUsuarioQueryService>();
 
-builder.Services.AddDataProtection();
+var dataProtectionKeysDirectory = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+    "ASP.NET",
+    "DataProtection-Keys");
+
+Directory.CreateDirectory(dataProtectionKeysDirectory);
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysDirectory))
+    .ProtectKeysWithDpapi();
 builder.Services.AddSingleton<IDestinoCredentialProtector, DestinoCredentialProtector>();
 
 //builder.Services.ConfigureHttpJsonOptions(options =>
@@ -130,17 +140,22 @@ var angularBrowserConfigured = app.Configuration["Spa:BrowserPath"]?.Trim();
 if (string.IsNullOrEmpty(angularBrowserConfigured))
     throw new InvalidOperationException("Configure 'Spa:BrowserPath' in appsettings.json (absolute path or relative to the API content root).");
 
-    var angularPath = "C:\\Users\\italo\\Documents\\ProyectoDeGrado\\UI\\dist\\ProyectoDeGradoUI\\browser";//Path.IsPathRooted(angularBrowserConfigured)
-//    ? angularBrowserConfigured
-//    : Path.Combine(app.Environment.ContentRootPath, angularBrowserConfigured);
+var angularPath = Path.GetFullPath(Path.IsPathRooted(angularBrowserConfigured)
+    ? angularBrowserConfigured
+    : Path.Combine(app.Environment.ContentRootPath, angularBrowserConfigured));
+
+if (!Directory.Exists(angularPath))
+    throw new DirectoryNotFoundException($"No se encontró el frontend publicado en '{angularPath}'. Verifique que la carpeta exista en la instalación.");
+
+var angularFileProvider = new PhysicalFileProvider(angularPath);
 
 // Asegurar usuario único y datos de ejemplo (orígenes, scripts, jobs)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.EnsureSeedData();
-    var destinoProtector = scope.ServiceProvider.GetRequiredService<IDestinoCredentialProtector>();
-    TrabajoDemoSeed.EnsureDemoTrabajo(db, destinoProtector);
+    //var destinoProtector = scope.ServiceProvider.GetRequiredService<IDestinoCredentialProtector>();
+    //TrabajoDemoSeed.EnsureDemoTrabajo(db, destinoProtector);
 }
 
 app.UseCors(_cors);
@@ -151,10 +166,13 @@ app.UseAuthorization();
 app.UseSerilogRequestLogging();
 
 // LOAD STATIC FILES
-app.UseDefaultFiles(); // Busca index.html por defecto
+app.UseDefaultFiles(new DefaultFilesOptions
+{
+    FileProvider = angularFileProvider
+}); // Busca index.html por defecto
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(angularPath),
+    FileProvider = angularFileProvider,
     RequestPath = ""
 });
 
@@ -180,7 +198,7 @@ app.MapTrabajos();
 // RETURN index.html for any non-API route to allow Angular routing to work
 app.MapFallbackToFile("index.html", new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(angularPath)
+    FileProvider = angularFileProvider
 });
 
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();

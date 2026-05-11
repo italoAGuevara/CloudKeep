@@ -67,3 +67,8 @@ API/mibase.db-shm
 API/mibase.db-shm
 /API/Logs
 /API/wwwroot/browser
+/TestResults/Selenium/JobSources
+/TestResults/Selenium
+/API/mibase.db
+/API/mibase.db-shm
+/API/mibase.db-wal

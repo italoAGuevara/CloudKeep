@@ -112,25 +112,25 @@ public class AppDbContext : DbContext
             SaveChanges();
         }
 
-        if (!Origenes.Any())
-        {
-            Origenes.AddRange(
-                new Origen { Nombre = "Documentos", Ruta = "C:\\Users\\Usuario\\Documents", Descripcion = "Carpeta de documentos del usuario", TamanoMaximo = "", FiltrosExclusiones = "", FechaCreacion = DateTime.Now },
-                new Origen { Nombre = "Escritorio", Ruta = "C:\\Users\\Usuario\\Desktop", Descripcion = "Escritorio", TamanoMaximo = "", FiltrosExclusiones = "", FechaCreacion = DateTime.Now },
-                new Origen { Nombre = "Proyectos", Ruta = "C:\\Proyectos", Descripcion = "Carpeta de proyectos", TamanoMaximo = "", FiltrosExclusiones = "", FechaCreacion = DateTime.Now }
-            );
-            SaveChanges();
-        }
+        //if (!Origenes.Any())
+        //{
+        //    Origenes.AddRange(
+        //        new Origen { Nombre = "Documentos", Ruta = "C:\\Users\\Usuario\\Documents", Descripcion = "Carpeta de documentos del usuario", TamanoMaximo = "", FiltrosExclusiones = "", FechaCreacion = DateTime.Now },
+        //        new Origen { Nombre = "Escritorio", Ruta = "C:\\Users\\Usuario\\Desktop", Descripcion = "Escritorio", TamanoMaximo = "", FiltrosExclusiones = "", FechaCreacion = DateTime.Now },
+        //        new Origen { Nombre = "Proyectos", Ruta = "C:\\Proyectos", Descripcion = "Carpeta de proyectos", TamanoMaximo = "", FiltrosExclusiones = "", FechaCreacion = DateTime.Now }
+        //    );
+        //    SaveChanges();
+        //}
                
 
-        if (!ScriptConfigurations.Any())
-        {
-            ScriptConfigurations.AddRange(
-                new ScriptConfiguration { Nombre = "Notificar inicio", ScriptPath = "C:\\Scripts\\notify_start.ps1", Arguments = "", Tipo = ".bar" },
-                new ScriptConfiguration { Nombre = "Limpiar temporales", ScriptPath = "C:\\Scripts\\clean_temp.ps1", Arguments = "asa", Tipo = ".js" },
-                new ScriptConfiguration { Nombre = "Notificar fin", ScriptPath = "C:\\Scripts\\notify_end.ps1", Arguments = "weewe", Tipo = ".ps1" }
-            );
-            SaveChanges();
-        }
+        //if (!ScriptConfigurations.Any())
+        //{
+        //    ScriptConfigurations.AddRange(
+        //        new ScriptConfiguration { Nombre = "Notificar inicio", ScriptPath = "C:\\Scripts\\notify_start.ps1", Arguments = "", Tipo = ".bar" },
+        //        new ScriptConfiguration { Nombre = "Limpiar temporales", ScriptPath = "C:\\Scripts\\clean_temp.ps1", Arguments = "asa", Tipo = ".js" },
+        //        new ScriptConfiguration { Nombre = "Notificar fin", ScriptPath = "C:\\Scripts\\notify_end.ps1", Arguments = "weewe", Tipo = ".ps1" }
+        //    );
+        //    SaveChanges();
+        //}
     }
 }
